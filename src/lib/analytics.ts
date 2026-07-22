@@ -331,6 +331,96 @@ export const perEmployeeProfile = (data: NormalisedData, employeeId: string) => 
   };
 };
 
+// Compute per-employee activity breakdown for AI grounding
+export interface EmployeeActivity {
+  id: string;
+  name: string;
+  department: string;
+  role: string;
+  total_minutes_observed: number;
+  total_hours_observed: number;
+  repetitive_minutes: number;
+  repetitive_share: number;
+  top_tasks: { task: string; minutes: number; hours: number }[];
+  hours_per_month: number;
+  recoverable_hours_per_month: number;
+  recoverable_inr_per_month: number;
+  hourly_inr: number | null;
+  status: string;
+}
+
+const computeEmployeeActivity = (data: NormalisedData, f: Filters): EmployeeActivity[] => {
+  const rows = applyFilters(data.activity, f);
+  const weeks = new Set(rows.map((r) => r.weekIndex)).size || 1;
+  
+  // Map: employeeId -> aggregated activity
+  const perEmp = new Map<string, {
+    total: number;
+    repetitive: number;
+    tasks: Map<string, number>;
+  }>();
+  
+  // Aggregate all activity per employee
+  for (const row of rows) {
+    const agg = perEmp.get(row.employeeId) ?? {
+      total: 0,
+      repetitive: 0,
+      tasks: new Map(),
+    };
+    
+    agg.total += row.durationMinutes;
+    if (row.isRepetitive) agg.repetitive += row.durationMinutes;
+    agg.tasks.set(row.taskCategory, (agg.tasks.get(row.taskCategory) ?? 0) + row.durationMinutes);
+    
+    perEmp.set(row.employeeId, agg);
+  }
+  
+  // Format for grounding with top tasks per employee
+  return Array.from(perEmp.entries())
+    .map(([id, agg]) => {
+      const emp = data.employeeMap.get(id);
+      
+      // Top 5 tasks by time
+      const topTasks = Array.from(agg.tasks.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5)
+        .map(([task, minutes]) => ({
+          task,
+          minutes,
+          hours: +(minutes / 60).toFixed(1),
+        }));
+      
+      // Calculate recoverable time using automation factors
+      let recoverableMinutes = 0;
+      for (const row of rows) {
+        if (row.employeeId === id) {
+          const factor = automationFactor(row.taskCategory, row.isRepetitive);
+          recoverableMinutes += row.durationMinutes * factor;
+        }
+      }
+      const recoverablePerMonth = (recoverableMinutes / weeks) * WEEKS_PER_MONTH;
+      const recoverableINR = emp?.hourlyINR ? (recoverablePerMonth / 60) * emp.hourlyINR : 0;
+      
+      return {
+        id,
+        name: emp?.name ?? id,
+        department: emp?.department ?? "Unknown",
+        role: emp?.role ?? "Unknown",
+        total_minutes_observed: agg.total,
+        total_hours_observed: +(agg.total / 60).toFixed(1),
+        repetitive_minutes: agg.repetitive,
+        repetitive_share: agg.total > 0 ? +(agg.repetitive / agg.total).toFixed(2) : 0,
+        top_tasks: topTasks,
+        hours_per_month: +((agg.total / weeks) * WEEKS_PER_MONTH / 60).toFixed(1),
+        recoverable_hours_per_month: +(recoverablePerMonth / 60).toFixed(1),
+        recoverable_inr_per_month: Math.round(recoverableINR),
+        hourly_inr: emp?.hourlyINR ?? null,
+        status: emp?.status ?? "active",
+      };
+    })
+    .sort((a, b) => b.total_minutes_observed - a.total_minutes_observed);
+};
+
 export const groundingSnapshot = (data: NormalisedData, f: Filters) => {
   const headline = computeHeadline(data, f);
   const priority = computePriority(data, f).slice(0, 8);
@@ -338,6 +428,7 @@ export const groundingSnapshot = (data: NormalisedData, f: Filters) => {
   const breakdownApp = computeBreakdown(data, f, "app").slice(0, 8);
   const breakdownDept = computeBreakdown(data, f, "department");
   const anomalies = computeAnomalies(data, f);
+  const employee_activity = computeEmployeeActivity(data, f);
   const employees = data.employees.map((e) => ({
     id: e.id, name: e.name, department: e.department, role: e.role,
     hourly_inr: e.hourlyINR, annual_inr: e.annualINR, tenure_months: e.tenureMonths,
@@ -365,6 +456,7 @@ export const groundingSnapshot = (data: NormalisedData, f: Filters) => {
     breakdown_by_app: breakdownApp.map((b) => ({ app: b.key, minutes: b.totalMinutes, employees: b.uniqueEmployees })),
     breakdown_by_department: breakdownDept.map((b) => ({ department: b.key, minutes: b.totalMinutes, repetitive_minutes: b.repetitiveMinutes })),
     anomalies,
+    employee_activity,
     employees,
     data_quality: data.quality,
   };
