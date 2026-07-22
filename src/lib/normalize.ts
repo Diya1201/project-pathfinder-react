@@ -98,7 +98,7 @@ const TASK_MAP: Record<string, string> = {
 
 const canonApp = (raw: string): string => {
   const key = (raw || "").trim().toLowerCase().replace(/\s+/g, " ");
-  return APP_MAP[key] ?? (raw || "").trim().replace(/\s+/g, " ") || "Unknown";
+  return APP_MAP[key] ?? ((raw || "").trim().replace(/\s+/g, " ") || "Unknown");
 };
 const canonTask = (raw: string): string => {
   const key = (raw || "").trim().toLowerCase().replace(/[_-]+/g, " ").replace(/\s+/g, " ");
