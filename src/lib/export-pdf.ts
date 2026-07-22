@@ -28,10 +28,13 @@ export function exportExecutivePDF(data: NormalisedData, filters: Filters) {
     filters.taskCategory ? `Task: ${filters.taskCategory}` : null,
     filters.employeeId ? `Employee: ${filters.employeeId}` : null,
   ].filter(Boolean);
-  const filterLine = filterParts.length ? filterParts.join("  ·  ") : "Filter: All employees, all departments";
+  const filterLine = filterParts.length
+    ? filterParts.join("  ·  ")
+    : "Filter: All employees, all departments";
   doc.text(
     `${data.quality.weekRange.start} → ${data.quality.weekRange.end}   ·   ${filterLine}`,
-    M, 68,
+    M,
+    68,
   );
   y = 120;
 
@@ -42,11 +45,17 @@ export function exportExecutivePDF(data: NormalisedData, filters: Filters) {
     doc.setDrawColor(220, 220, 225);
     doc.setFillColor(250, 248, 240);
     doc.roundedRect(x, y, cardW, 90, 6, 6, "FD");
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(120, 110, 90);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(120, 110, 90);
     doc.text(title, x + 14, y + 20);
-    doc.setFont("helvetica", "bold"); doc.setFontSize(24); doc.setTextColor(30, 30, 40);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(24);
+    doc.setTextColor(30, 30, 40);
     doc.text(big, x + 14, y + 52);
-    doc.setFont("helvetica", "normal"); doc.setFontSize(9); doc.setTextColor(90, 90, 100);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.setTextColor(90, 90, 100);
     doc.text(sub, x + 14, y + 76);
   };
   drawCard(
@@ -64,16 +73,23 @@ export function exportExecutivePDF(data: NormalisedData, filters: Filters) {
   y += 110;
 
   // Top-5 automation
-  doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(30, 30, 40);
-  doc.text("Top 5 automation opportunities", M, y); y += 16;
-  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(30, 30, 40);
+  doc.text("Top 5 automation opportunities", M, y);
+  y += 16;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
   doc.setDrawColor(230, 230, 235);
-  doc.line(M, y, W - M, y); y += 4;
+  doc.line(M, y, W - M, y);
+  y += 4;
   priority.forEach((p, i) => {
     y += 16;
-    doc.setFont("helvetica", "bold"); doc.setTextColor(30, 30, 40);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(30, 30, 40);
     doc.text(`${i + 1}. ${p.taskCategory}`, M, y);
-    doc.setFont("helvetica", "normal"); doc.setTextColor(80, 80, 95);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(80, 80, 95);
     const meta = `${p.concentration} people  ·  ${Math.round(p.repetitiveShare * 100)}% repetitive  ·  ${fmtINR(p.recoverableINRPerMonth)}/mo recoverable`;
     doc.text(meta, M + 200, y);
     // score bar
@@ -86,16 +102,24 @@ export function exportExecutivePDF(data: NormalisedData, filters: Filters) {
   y += 18;
 
   // Department strip
-  doc.setFont("helvetica", "bold"); doc.setFontSize(12); doc.setTextColor(30, 30, 40);
-  doc.text("Where the time sits (by department)", M, y); y += 16;
-  doc.setFont("helvetica", "normal"); doc.setFontSize(10);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(30, 30, 40);
+  doc.text("Where the time sits (by department)", M, y);
+  y += 16;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
   const maxMin = Math.max(...deptBreakdown.map((d) => d.totalMinutes), 1);
   deptBreakdown.forEach((d) => {
     y += 16;
     doc.setTextColor(30, 30, 40);
     doc.text(d.key, M, y);
     doc.setTextColor(90, 90, 105);
-    doc.text(`${(d.totalMinutes / 60).toFixed(0)} h  ·  ${fmtINR(d.recoverableINR)}/mo recoverable`, M + 180, y);
+    doc.text(
+      `${(d.totalMinutes / 60).toFixed(0)} h  ·  ${fmtINR(d.recoverableINR)}/mo recoverable`,
+      M + 180,
+      y,
+    );
     const barX = W - M - 200;
     doc.setFillColor(235, 232, 220);
     doc.rect(barX, y - 8, 200, 10, "F");
@@ -104,10 +128,12 @@ export function exportExecutivePDF(data: NormalisedData, filters: Filters) {
   });
 
   // Footer
-  doc.setFontSize(8); doc.setTextColor(140, 140, 155);
+  doc.setFontSize(8);
+  doc.setTextColor(140, 140, 155);
   doc.text(
     `Generated ${new Date().toISOString().slice(0, 16).replace("T", " ")}  ·  Workforce Pulse  ·  ${headline.weeksCovered} weeks observed  ·  Methodology in repo README`,
-    M, doc.internal.pageSize.getHeight() - 24,
+    M,
+    doc.internal.pageSize.getHeight() - 24,
   );
 
   const stamp = new Date().toISOString().slice(0, 10);

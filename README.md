@@ -1,12 +1,13 @@
 # Workforce Pulse
 
-A one-page executive analytics app that answers the COO's question — *where are we wasting the most time and money, and what should we automate first?* — from two intentionally messy files: `activity_logs.csv` (~540 rows) and `employees.json` (HRMS export).
+A one-page executive analytics app that answers the COO's question — _where are we wasting the most time and money, and what should we automate first?_ — from two intentionally messy files: `activity_logs.csv` (~540 rows) and `employees.json` (HRMS export).
 
 Stack: React 19 + TanStack Start (Vite), Recharts, jsPDF, Lovable AI Gateway (Gemini 2.5 Flash). Data is loaded, normalised and joined **entirely on the client**; the server function exists only to broker the LLM call. Live URL is served by Lovable.
 
 ## Assumptions
 
 **activity_logs.csv**
+
 - Timestamps: ISO (`2025-10-14 11:23:00`, `2025-10-17T13:21:23`) and slash (`21/10/2025 14:44`) formats are both parsed. Everything is anchored to **Asia/Kolkata (IST)**; slash-format dates were assumed to be `dd/mm/yyyy` (Indian company).
 - `duration_minutes`: keep `1..480`. Drop negatives/zero/blank (`negativeOrZero`) and > 8 h (`tooLarge`). Never impute.
 - `is_repetitive`: `true / 1 / yes / y / t` → true; `false / 0 / no / n / f / na / n/a / null / ""` → false. Anything else defaults to false and is counted as normalised.
@@ -14,6 +15,7 @@ Stack: React 19 + TanStack Start (Vite), Recharts, jsPDF, Lovable AI Gateway (Ge
 - Deduplication key: `employee_id | timestamp | app | task | duration`.
 
 **employees.json**
+
 - Records live under `.employees` (the brief mentions `data.employees`; both shapes are handled).
 - ID keys: `employee_id` and `EmployeeID`. Dept keys: `department`, `Dept`. Nested `meta.role`, `meta.compensation.annual`, `meta.tenure_months`, `meta.working_hours` are all read.
 - Compensation is reconciled to a single canonical **annual INR** figure by converting:
@@ -26,48 +28,55 @@ Stack: React 19 + TanStack Start (Vite), Recharts, jsPDF, Lovable AI Gateway (Ge
 
 ## Join strategy & special cases
 
-| ID | Situation | Handling |
-|---|---|---|
+| ID   | Situation                                                       | Handling                                                                                                                                                    |
+| ---- | --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | E007 | Duplicate HRMS record (28 mo @ ₹24 L vs 40 mo @ 14 LPA = ₹14 L) | Kept the record with the **highest annual-INR-equivalent**, tenure as tiebreak. Alternates shown in the Data Quality drawer's Compensation conflicts panel. |
-| E013 | Appears in activity, missing from HRMS | Retained in activity charts + people table (labelled `orphan`). Contributes ₹0 to the rupee headline because we refuse to invent a rate. |
-| E099 | In HRMS, never appears in activity | Kept on roster (visible in Data Quality drawer). Does not appear in any activity chart. |
-| E010 | `status = terminated`, `terminated_on = 2025-10-22` | Kept. If any activity row is dated after termination, it surfaces in the Anomaly panel. |
+| E013 | Appears in activity, missing from HRMS                          | Retained in activity charts + people table (labelled `orphan`). Contributes ₹0 to the rupee headline because we refuse to invent a rate.                    |
+| E099 | In HRMS, never appears in activity                              | Kept on roster (visible in Data Quality drawer). Does not appear in any activity chart.                                                                     |
+| E010 | `status = terminated`, `terminated_on = 2025-10-22`             | Kept. If any activity row is dated after termination, it surfaces in the Anomaly panel.                                                                     |
 
 Numbers of dropped / fixed / flagged rows and the three special-case ID lists are all visible in the **Data quality** drawer in the app.
 
 ## Formulas
 
 **Recoverable minutes** per row:
+
 ```
 recoverable = duration_minutes × automationFactor(task, is_repetitive)
 ```
-`automationFactor` is a documented lookup in `src/lib/analytics.ts`. Rules-based digital tasks (Data Entry, Lead Entry, Invoice Processing, CRM Updates) score 0.75–0.85; judgment-heavy tasks (Meetings, Client Communication) score 0.10–0.15. For a repetitive task not in the table the factor is 0.5; non-repetitive drops to `factor × 0.35`. The factor is the honest half of the "× 0.6" hand-wave the brief calls out — it says *this specific category* is X% automatable, not "60% of all repetitive time evaporates".
+
+`automationFactor` is a documented lookup in `src/lib/analytics.ts`. Rules-based digital tasks (Data Entry, Lead Entry, Invoice Processing, CRM Updates) score 0.75–0.85; judgment-heavy tasks (Meetings, Client Communication) score 0.10–0.15. For a repetitive task not in the table the factor is 0.5; non-repetitive drops to `factor × 0.35`. The factor is the honest half of the "× 0.6" hand-wave the brief calls out — it says _this specific category_ is X% automatable, not "60% of all repetitive time evaporates".
 
 **Per-month projection** — the observed window is 4 weeks, but filters can shrink it, so:
+
 ```
 per_month = (Σ recoverable in filtered window / weeks_observed) × 4.345
 ```
 
 **Rupee headline**:
+
 ```
 inr_per_month = Σ over employees ( per_month_hours × hourly_INR )
 ```
+
 Employees without a hourly rate contribute ₹0. The card shows the priced-vs-total employee ratio to make this visible.
 
 **Automation priority score** (per task category, normalised across the visible slice):
+
 ```
 score = 0.30 × volume_norm      // how much time this task eats
       + 0.30 × repetitive_share // how mechanical it is
       + 0.20 × concentration    // how many people would benefit (easier to automate a widely-shared task than an idiosyncratic one)
       + 0.20 × inr_norm         // rupee impact if we automated it
 ```
+
 All four inputs are min-max scaled inside the current filter slice, so the ranking is meaningful even after cross-filtering.
 
 ## Anomaly detection
 
 Three independent heuristics — anything they surface is shown as an anomaly card:
 
-1. **Repetitive-share z-score** per employee: individuals whose repetitive share is > 1.5 σ above the org mean *and* who have > 1 h of activity are flagged.
+1. **Repetitive-share z-score** per employee: individuals whose repetitive share is > 1.5 σ above the org mean _and_ who have > 1 h of activity are flagged.
 2. **Post-termination activity**: any activity row timestamped after an employee's `terminated_on` date.
 3. **WoW spike**: task categories whose most recent week grew > 30 % over the prior week, with prior week > 30 min (so we don't flag noise on tiny bases).
 
@@ -84,6 +93,7 @@ Multi-turn works because the message history is retained on the client and re-se
 ## Cross-filters
 
 Wired end-to-end:
+
 - Click a bar in **Where the time sits** (task-category or department dimension) → filters the priority queue, trend, anomalies, people table, employee drill-down, headline numbers, PDF export and AI grounding.
 - Click a row in **Automate this first** → same, filtering by task.
 - Click a person → drill-down profile with peer comparison against same-role employees.

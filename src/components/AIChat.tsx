@@ -7,7 +7,10 @@ import { groundingSnapshot } from "@/lib/analytics";
 import type { NormalisedData } from "@/lib/normalize";
 import type { Filters } from "@/lib/analytics";
 
-interface Msg { role: "user" | "assistant"; content: string }
+interface Msg {
+  role: "user" | "assistant";
+  content: string;
+}
 
 const STARTERS = [
   "Who is our single highest-ROI automation target next quarter?",
@@ -110,7 +113,10 @@ export function AIChat({ data, filters }: { data: NormalisedData; filters: Filte
         )}
       </div>
       <form
-        onSubmit={(e) => { e.preventDefault(); submit(input); }}
+        onSubmit={(e) => {
+          e.preventDefault();
+          submit(input);
+        }}
         className="flex items-center gap-2 border-t border-border px-3 py-2"
       >
         <input

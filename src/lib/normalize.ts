@@ -29,8 +29,18 @@ export interface ActivityRow {
 export interface DataQuality {
   activityRaw: number;
   activityKept: number;
-  activityDropped: { negativeOrZero: number; tooLarge: number; badTimestamp: number; missingFields: number; duplicates: number };
-  activityFixed: { appsCanonicalised: number; tasksCanonicalised: number; booleansNormalised: number };
+  activityDropped: {
+    negativeOrZero: number;
+    tooLarge: number;
+    badTimestamp: number;
+    missingFields: number;
+    duplicates: number;
+  };
+  activityFixed: {
+    appsCanonicalised: number;
+    tasksCanonicalised: number;
+    booleansNormalised: number;
+  };
   employeesRaw: number;
   employeesKept: number;
   duplicateIds: string[];
@@ -109,7 +119,9 @@ const canonTask = (raw: string): string => {
 const BOOL_TRUE = new Set(["true", "1", "yes", "y", "t"]);
 const BOOL_FALSE = new Set(["false", "0", "no", "n", "f", "", "na", "n/a", "null"]);
 const parseBool = (raw: unknown): { value: boolean; wasNormalised: boolean } => {
-  const s = String(raw ?? "").trim().toLowerCase();
+  const s = String(raw ?? "")
+    .trim()
+    .toLowerCase();
   const rawExact = s === "true" || s === "false";
   if (BOOL_TRUE.has(s)) return { value: true, wasNormalised: !rawExact };
   if (BOOL_FALSE.has(s)) return { value: false, wasNormalised: !rawExact };
@@ -165,7 +177,12 @@ const normaliseWorkingHours = (v: unknown): string | null => {
 
 const ANNUAL_HOURS = 2080; // 40h * 52w, documented in README
 
-const readOneEmployee = (r: RawEmp): Omit<Employee, "notes" | "compSource"> & { candidates: { annualINR: number; source: Employee["compSource"] }[]; workingHoursRaw: unknown } => {
+const readOneEmployee = (
+  r: RawEmp,
+): Omit<Employee, "notes" | "compSource"> & {
+  candidates: { annualINR: number; source: Employee["compSource"] }[];
+  workingHoursRaw: unknown;
+} => {
   const id = String(pick(r, ["employee_id", "EmployeeID", "employeeId", "id"]) ?? "").trim();
   const meta = (r.meta ?? {}) as RawEmp;
   const comp = (meta.compensation ?? {}) as RawEmp;
@@ -175,9 +192,11 @@ const readOneEmployee = (r: RawEmp): Omit<Employee, "notes" | "compSource"> & { 
   const role = String(pick(r, ["role", "Role"]) ?? (meta.role as string) ?? "").trim();
   const tenureRaw = pick(r, ["tenure_months", "tenureMonths"]) ?? meta.tenure_months;
   const workingHoursRaw = pick(r, ["working_hours", "workingHours"]) ?? meta.working_hours;
-  const status = (String(pick(r, ["status", "Status"]) ?? "active").toLowerCase() === "terminated"
-    ? "terminated"
-    : "active") as Employee["status"];
+  const status = (
+    String(pick(r, ["status", "Status"]) ?? "active").toLowerCase() === "terminated"
+      ? "terminated"
+      : "active"
+  ) as Employee["status"];
   const terminatedOn = r.terminated_on as string | undefined;
 
   const candidates: { annualINR: number; source: Employee["compSource"] }[] = [];
@@ -186,9 +205,11 @@ const readOneEmployee = (r: RawEmp): Omit<Employee, "notes" | "compSource"> & { 
   const lpa = pick(r, ["salary_LPA", "salaryLPA"]);
   if (typeof lpa === "number") candidates.push({ annualINR: lpa * 100000, source: "salary_LPA" });
   const hourly = pick(r, ["hourly_rate_inr", "hourlyRate"]);
-  if (typeof hourly === "number") candidates.push({ annualINR: hourly * ANNUAL_HOURS, source: "hourly_rate_inr" });
+  if (typeof hourly === "number")
+    candidates.push({ annualINR: hourly * ANNUAL_HOURS, source: "hourly_rate_inr" });
   const metaAnnual = comp.annual;
-  if (typeof metaAnnual === "number") candidates.push({ annualINR: metaAnnual, source: "meta.annual" });
+  if (typeof metaAnnual === "number")
+    candidates.push({ annualINR: metaAnnual, source: "meta.annual" });
 
   return {
     id,
@@ -235,7 +256,9 @@ export const normaliseAll = (employeesJson: any, csvText: string): NormalisedDat
     const notes: string[] = [];
     if (records.length > 1) {
       duplicateIds.push(id);
-      notes.push(`Duplicate HRMS record (${records.length}× entries). Kept highest annual comp; higher tenure as tiebreak.`);
+      notes.push(
+        `Duplicate HRMS record (${records.length}× entries). Kept highest annual comp; higher tenure as tiebreak.`,
+      );
     }
 
     // Merge candidate compensation across duplicates
@@ -254,9 +277,7 @@ export const normaliseAll = (employeesJson: any, csvText: string): NormalisedDat
     }
 
     // Prefer the record with highest tenure to source name/dept/role/wh
-    const primary = [...records].sort(
-      (a, b) => (b.tenureMonths ?? -1) - (a.tenureMonths ?? -1),
-    )[0];
+    const primary = [...records].sort((a, b) => (b.tenureMonths ?? -1) - (a.tenureMonths ?? -1))[0];
 
     const annualINR = chosen?.annualINR ?? null;
     employees.push({
@@ -278,9 +299,19 @@ export const normaliseAll = (employeesJson: any, csvText: string): NormalisedDat
   const employeeMap = new Map(employees.map((e) => [e.id, e]));
 
   // ---------- Activity CSV ----------
-  const parsedCsv = Papa.parse<Record<string, string>>(csvText, { header: true, skipEmptyLines: true, transformHeader: (h) => h.trim() });
+  const parsedCsv = Papa.parse<Record<string, string>>(csvText, {
+    header: true,
+    skipEmptyLines: true,
+    transformHeader: (h) => h.trim(),
+  });
   const rowsRaw = parsedCsv.data;
-  const dropped = { negativeOrZero: 0, tooLarge: 0, badTimestamp: 0, missingFields: 0, duplicates: 0 };
+  const dropped = {
+    negativeOrZero: 0,
+    tooLarge: 0,
+    badTimestamp: 0,
+    missingFields: 0,
+    duplicates: 0,
+  };
   const fixed = { appsCanonicalised: 0, tasksCanonicalised: 0, booleansNormalised: 0 };
   const kept: ActivityRow[] = [];
   const dedup = new Set<string>();
@@ -304,11 +335,20 @@ export const normaliseAll = (employeesJson: any, csvText: string): NormalisedDat
       continue;
     }
     const dur = Number(r.duration_minutes);
-    if (!Number.isFinite(dur) || dur <= 0) { dropped.negativeOrZero++; continue; }
-    if (dur > 480) { dropped.tooLarge++; continue; }
+    if (!Number.isFinite(dur) || dur <= 0) {
+      dropped.negativeOrZero++;
+      continue;
+    }
+    if (dur > 480) {
+      dropped.tooLarge++;
+      continue;
+    }
 
     const key = `${employeeId}|${ts.toISOString()}|${app}|${task}|${dur}`;
-    if (dedup.has(key)) { dropped.duplicates++; continue; }
+    if (dedup.has(key)) {
+      dropped.duplicates++;
+      continue;
+    }
     dedup.add(key);
 
     kept.push({
@@ -333,8 +373,12 @@ export const normaliseAll = (employeesJson: any, csvText: string): NormalisedDat
     }
   }
   const weeks = Array.from(new Set(kept.map((r) => r.weekIndex))).sort((a, b) => a - b);
-  const minDate = kept.length ? new Date(Math.min(...kept.map((r) => r.timestamp.getTime()))) : new Date();
-  const maxDate = kept.length ? new Date(Math.max(...kept.map((r) => r.timestamp.getTime()))) : new Date();
+  const minDate = kept.length
+    ? new Date(Math.min(...kept.map((r) => r.timestamp.getTime())))
+    : new Date();
+  const maxDate = kept.length
+    ? new Date(Math.max(...kept.map((r) => r.timestamp.getTime())))
+    : new Date();
 
   const activityIds = new Set(kept.map((r) => r.employeeId));
   const empIds = new Set(employees.map((e) => e.id));

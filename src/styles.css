@@ -70,16 +70,32 @@
   --chart-6: oklch(0.78 0.12 240);
 }
 
-.dark { color-scheme: dark; }
-
-@layer base {
-  * { border-color: var(--color-border); }
-  html, body { background-color: var(--color-background); color: var(--color-foreground); font-family: var(--font-sans); }
-  body { font-feature-settings: "cv02","cv03","cv04","cv11"; }
-  ::selection { background: oklch(0.82 0.16 78 / 0.3); }
+.dark {
+  color-scheme: dark;
 }
 
-@utility font-display { font-family: var(--font-display); font-feature-settings: "liga","dlig"; }
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+  html,
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+  body {
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+  ::selection {
+    background: oklch(0.82 0.16 78 / 0.3);
+  }
+}
+
+@utility font-display {
+  font-family: var(--font-display);
+  font-feature-settings: "liga", "dlig";
+}
 @utility panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -92,12 +108,17 @@
 }
 @utility num {
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "tnum","cv11";
+  font-feature-settings: "tnum", "cv11";
 }
 @utility chip {
-  display: inline-flex; align-items: center; gap: 0.25rem;
-  padding: 0.15rem 0.5rem; border-radius: 999px;
-  font-size: 0.7rem; font-weight: 500;
-  background: var(--surface-2); color: var(--muted-foreground);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 500;
+  background: var(--surface-2);
+  color: var(--muted-foreground);
   border: 1px solid var(--border);
 }

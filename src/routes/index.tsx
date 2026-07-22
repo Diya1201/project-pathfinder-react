@@ -2,17 +2,42 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
-  BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, LineChart, Line, CartesianGrid, Cell, Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  LineChart,
+  Line,
+  CartesianGrid,
+  Cell,
+  Legend,
 } from "recharts";
 import {
-  Activity, ArrowRight, ChevronRight, Database, Download, Filter, Sparkles, TrendingUp,
-  AlertTriangle, Users, X, ChevronDown,
+  Activity,
+  ArrowRight,
+  ChevronRight,
+  Database,
+  Download,
+  Filter,
+  Sparkles,
+  TrendingUp,
+  AlertTriangle,
+  Users,
+  X,
+  ChevronDown,
 } from "lucide-react";
 
 import { normaliseAll, fmtINR, fmtHours } from "@/lib/normalize";
 import type { NormalisedData } from "@/lib/normalize";
 import {
-  applyFilters, computeAnomalies, computeBreakdown, computeHeadline, computePriority, computeWeekly,
+  applyFilters,
+  computeAnomalies,
+  computeBreakdown,
+  computeHeadline,
+  computePriority,
+  computeWeekly,
   perEmployeeProfile,
 } from "@/lib/analytics";
 import type { Dimension, Filters } from "@/lib/analytics";
@@ -23,9 +48,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Workforce Pulse — where is the time & money going?" },
-      { name: "description", content: "COO-facing analytics on 4 weeks of activity data joined against HRMS. Recoverable hours, INR impact, automation priority and a grounded AI copilot." },
+      {
+        name: "description",
+        content:
+          "COO-facing analytics on 4 weeks of activity data joined against HRMS. Recoverable hours, INR impact, automation priority and a grounded AI copilot.",
+      },
       { property: "og:title", content: "Workforce Pulse — where is the time & money going?" },
-      { property: "og:description", content: "Recoverable hours, INR impact, automation priority and a grounded AI copilot for a 200-person company." },
+      {
+        property: "og:description",
+        content:
+          "Recoverable hours, INR impact, automation priority and a grounded AI copilot for a 200-person company.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -34,7 +67,12 @@ export const Route = createFileRoute("/")({
 });
 
 const CHART_COLORS = [
-  "var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--chart-4)", "var(--chart-5)", "var(--chart-6)",
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
+  "var(--chart-6)",
 ];
 
 async function loadData(): Promise<NormalisedData> {
@@ -48,8 +86,16 @@ async function loadData(): Promise<NormalisedData> {
 }
 
 function Dashboard() {
-  const query = useQuery({ queryKey: ["workforce-pulse-data"], queryFn: loadData, staleTime: Infinity });
-  const [filters, setFilters] = useState<Filters>({ department: null, taskCategory: null, employeeId: null });
+  const query = useQuery({
+    queryKey: ["workforce-pulse-data"],
+    queryFn: loadData,
+    staleTime: Infinity,
+  });
+  const [filters, setFilters] = useState<Filters>({
+    department: null,
+    taskCategory: null,
+    employeeId: null,
+  });
   const [dim, setDim] = useState<Dimension>("taskCategory");
   const [showQuality, setShowQuality] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
@@ -91,20 +137,39 @@ function Dashboard() {
           <FilterBar filters={filters} onClear={clearFilter} data={data} />
         )}
 
-        <HeadlineSection data={data} filters={filters} onOpenMethod={() => setMethodOpen((v) => !v)} methodOpen={methodOpen} />
+        <HeadlineSection
+          data={data}
+          filters={filters}
+          onOpenMethod={() => setMethodOpen((v) => !v)}
+          methodOpen={methodOpen}
+        />
 
         <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
-            <BreakdownPanel data={data} filters={filters} dim={dim} setDim={setDim} onPick={(v) => {
-              if (dim === "taskCategory") setFilter("taskCategory", v);
-              else if (dim === "department") setFilter("department", v);
-            }} />
-            <PriorityPanel data={data} filters={filters} onPickTask={(v) => setFilter("taskCategory", v)} />
+            <BreakdownPanel
+              data={data}
+              filters={filters}
+              dim={dim}
+              setDim={setDim}
+              onPick={(v) => {
+                if (dim === "taskCategory") setFilter("taskCategory", v);
+                else if (dim === "department") setFilter("department", v);
+              }}
+            />
+            <PriorityPanel
+              data={data}
+              filters={filters}
+              onPickTask={(v) => setFilter("taskCategory", v)}
+            />
             <div className="grid gap-6 md:grid-cols-2">
               <TrendPanel data={data} filters={filters} />
               <AnomalyPanel data={data} filters={filters} />
             </div>
-            <EmployeePanel data={data} filters={filters} setEmployee={(id) => setFilter("employeeId", id)} />
+            <EmployeePanel
+              data={data}
+              filters={filters}
+              setEmployee={(id) => setFilter("employeeId", id)}
+            />
           </div>
           <aside className="lg:col-span-1 flex flex-col gap-6">
             <div className="min-h-[520px] lg:sticky lg:top-[88px]">
@@ -122,8 +187,18 @@ function Dashboard() {
 
 // -------- Header --------
 function Header({
-  data, filters, onClearAll, onExport, onOpenQuality,
-}: { data: NormalisedData; filters: Filters; onClearAll: () => void; onExport: () => void; onOpenQuality: () => void }) {
+  data,
+  filters,
+  onClearAll,
+  onExport,
+  onOpenQuality,
+}: {
+  data: NormalisedData;
+  filters: Filters;
+  onClearAll: () => void;
+  onExport: () => void;
+  onOpenQuality: () => void;
+}) {
   const dq = data.quality;
   return (
     <header className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur">
@@ -138,7 +213,8 @@ function Header({
           <div>
             <div className="font-display text-xl leading-none">Workforce Pulse</div>
             <div className="mt-0.5 text-[11px] uppercase tracking-widest text-muted-foreground">
-              {dq.weekRange.start} → {dq.weekRange.end} · {data.employees.length} employees · {data.activity.length.toLocaleString()} activity rows
+              {dq.weekRange.start} → {dq.weekRange.end} · {data.employees.length} employees ·{" "}
+              {data.activity.length.toLocaleString()} activity rows
             </div>
           </div>
         </div>
@@ -169,10 +245,19 @@ function Header({
   );
 }
 
-function FilterBar({ filters, onClear, data }: { filters: Filters; onClear: (k: keyof Filters) => void; data: NormalisedData }) {
+function FilterBar({
+  filters,
+  onClear,
+  data,
+}: {
+  filters: Filters;
+  onClear: (k: keyof Filters) => void;
+  data: NormalisedData;
+}) {
   const chips: { k: keyof Filters; label: string }[] = [];
   if (filters.department) chips.push({ k: "department", label: `Dept · ${filters.department}` });
-  if (filters.taskCategory) chips.push({ k: "taskCategory", label: `Task · ${filters.taskCategory}` });
+  if (filters.taskCategory)
+    chips.push({ k: "taskCategory", label: `Task · ${filters.taskCategory}` });
   if (filters.employeeId) {
     const emp = data.employeeMap.get(filters.employeeId);
     chips.push({ k: "employeeId", label: `Employee · ${emp?.name ?? filters.employeeId}` });
@@ -195,7 +280,17 @@ function FilterBar({ filters, onClear, data }: { filters: Filters; onClear: (k: 
 }
 
 // -------- Headline --------
-function HeadlineSection({ data, filters, methodOpen, onOpenMethod }: { data: NormalisedData; filters: Filters; methodOpen: boolean; onOpenMethod: () => void }) {
+function HeadlineSection({
+  data,
+  filters,
+  methodOpen,
+  onOpenMethod,
+}: {
+  data: NormalisedData;
+  filters: Filters;
+  methodOpen: boolean;
+  onOpenMethod: () => void;
+}) {
   const h = computeHeadline(data, filters);
   const priced = h.perEmployee.filter((e) => e.hourlyINR).length;
   return (
@@ -212,7 +307,8 @@ function HeadlineSection({ data, filters, methodOpen, onOpenMethod }: { data: No
           onClick={onOpenMethod}
           className="hidden shrink-0 items-center gap-1 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground md:inline-flex"
         >
-          Methodology <ChevronDown className={`size-3 transition ${methodOpen ? "rotate-180" : ""}`} />
+          Methodology{" "}
+          <ChevronDown className={`size-3 transition ${methodOpen ? "rotate-180" : ""}`} />
         </button>
       </div>
 
@@ -236,7 +332,17 @@ function HeadlineSection({ data, filters, methodOpen, onOpenMethod }: { data: No
   );
 }
 
-function HeadlineCard({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: "primary" | "accent" }) {
+function HeadlineCard({
+  label,
+  value,
+  sub,
+  tone,
+}: {
+  label: string;
+  value: string;
+  sub: string;
+  tone: "primary" | "accent";
+}) {
   return (
     <div className="panel relative overflow-hidden p-6">
       <div
@@ -259,11 +365,31 @@ function Methodology() {
         <Sparkles className="size-4 text-primary" /> Methodology (auditable)
       </div>
       <ol className="list-decimal space-y-1 pl-5">
-        <li><b>Recoverable minutes</b> per row = <span className="num">duration × automationFactor(task, is_repetitive)</span>. Factors are documented per canonical task in <code>src/lib/analytics.ts</code>. Rules-based digital tasks (Data Entry, CRM Updates, Invoice Processing) score 0.75-0.85; judgment tasks (Meetings, Client Comms) score 0.10-0.15.</li>
-        <li><b>Per-month projection</b>: sum recoverable minutes in the filtered window, divide by weeks observed, multiply by 4.345.</li>
-        <li><b>INR</b> = recoverable hours × HRMS hourly rate. Annual comp is converted using 2,080 hrs/yr. Employees with no comp data contribute 0 rupees (never invented).</li>
-        <li><b>Priority score</b> = 0.30 × normalised volume + 0.30 × repetitive share + 0.20 × employee concentration + 0.20 × normalised INR impact.</li>
-        <li><b>Duplicate E007</b>: kept the record with the highest annual-INR-equivalent and highest tenure (see Data quality drawer). <b>E099</b> (in HRMS, no activity) is retained in the roster but never inflates headline numbers. <b>E013</b> (in activity, missing from HRMS) is kept in activity charts but contributes ₹0 to the rupee headline.</li>
+        <li>
+          <b>Recoverable minutes</b> per row ={" "}
+          <span className="num">duration × automationFactor(task, is_repetitive)</span>. Factors are
+          documented per canonical task in <code>src/lib/analytics.ts</code>. Rules-based digital
+          tasks (Data Entry, CRM Updates, Invoice Processing) score 0.75-0.85; judgment tasks
+          (Meetings, Client Comms) score 0.10-0.15.
+        </li>
+        <li>
+          <b>Per-month projection</b>: sum recoverable minutes in the filtered window, divide by
+          weeks observed, multiply by 4.345.
+        </li>
+        <li>
+          <b>INR</b> = recoverable hours × HRMS hourly rate. Annual comp is converted using 2,080
+          hrs/yr. Employees with no comp data contribute 0 rupees (never invented).
+        </li>
+        <li>
+          <b>Priority score</b> = 0.30 × normalised volume + 0.30 × repetitive share + 0.20 ×
+          employee concentration + 0.20 × normalised INR impact.
+        </li>
+        <li>
+          <b>Duplicate E007</b>: kept the record with the highest annual-INR-equivalent and highest
+          tenure (see Data quality drawer). <b>E099</b> (in HRMS, no activity) is retained in the
+          roster but never inflates headline numbers. <b>E013</b> (in activity, missing from HRMS)
+          is kept in activity charts but contributes ₹0 to the rupee headline.
+        </li>
       </ol>
     </div>
   );
@@ -271,8 +397,18 @@ function Methodology() {
 
 // -------- Breakdown --------
 function BreakdownPanel({
-  data, filters, dim, setDim, onPick,
-}: { data: NormalisedData; filters: Filters; dim: Dimension; setDim: (d: Dimension) => void; onPick: (key: string) => void }) {
+  data,
+  filters,
+  dim,
+  setDim,
+  onPick,
+}: {
+  data: NormalisedData;
+  filters: Filters;
+  dim: Dimension;
+  setDim: (d: Dimension) => void;
+  onPick: (key: string) => void;
+}) {
   const rows = computeBreakdown(data, filters, dim).slice(0, 10);
   const dims: { key: Dimension; label: string }[] = [
     { key: "taskCategory", label: "Task category" },
@@ -295,7 +431,9 @@ function BreakdownPanel({
               key={d.key}
               onClick={() => setDim(d.key)}
               className={`rounded px-3 py-1 transition ${
-                dim === d.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                dim === d.key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {d.label}
@@ -305,22 +443,51 @@ function BreakdownPanel({
       </div>
       <div className="h-[320px] w-full">
         <ResponsiveContainer>
-          <BarChart data={rows} layout="vertical" margin={{ left: 10, right: 16, top: 4, bottom: 4 }}>
+          <BarChart
+            data={rows}
+            layout="vertical"
+            margin={{ left: 10, right: 16, top: 4, bottom: 4 }}
+          >
             <CartesianGrid stroke="var(--border)" strokeDasharray="2 3" horizontal={false} />
-            <XAxis type="number" stroke="var(--muted-foreground)" fontSize={11} tickFormatter={(v) => `${Math.round(v / 60)}h`} />
-            <YAxis dataKey="key" type="category" stroke="var(--muted-foreground)" fontSize={11} width={130} tick={{ fill: "var(--foreground)" }} />
+            <XAxis
+              type="number"
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickFormatter={(v) => `${Math.round(v / 60)}h`}
+            />
+            <YAxis
+              dataKey="key"
+              type="category"
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              width={130}
+              tick={{ fill: "var(--foreground)" }}
+            />
             <Tooltip content={<BreakdownTooltip />} cursor={{ fill: "oklch(1 0 0 / 0.04)" }} />
-            <Bar dataKey="totalMinutes" radius={[0, 4, 4, 0]} onClick={(_d, i) => clickable && onPick(rows[i].key)} cursor={clickable ? "pointer" : "default"}>
+            <Bar
+              dataKey="totalMinutes"
+              radius={[0, 4, 4, 0]}
+              onClick={(_d, i) => clickable && onPick(rows[i].key)}
+              cursor={clickable ? "pointer" : "default"}
+            >
               {rows.map((r, i) => (
-                <Cell key={r.key} fill={CHART_COLORS[i % CHART_COLORS.length]} opacity={r.repetitiveMinutes / Math.max(1, r.totalMinutes) > 0.5 ? 1 : 0.65} />
+                <Cell
+                  key={r.key}
+                  fill={CHART_COLORS[i % CHART_COLORS.length]}
+                  opacity={r.repetitiveMinutes / Math.max(1, r.totalMinutes) > 0.5 ? 1 : 0.65}
+                />
               ))}
             </Bar>
           </BarChart>
         </ResponsiveContainer>
       </div>
       <div className="mt-2 flex items-center gap-4 text-[11px] text-muted-foreground">
-        <span className="inline-flex items-center gap-1"><span className="inline-block size-2 rounded bg-chart-1" /> High repetitive share</span>
-        <span className="inline-flex items-center gap-1"><span className="inline-block size-2 rounded bg-chart-1/50" /> Low repetitive share</span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block size-2 rounded bg-chart-1" /> High repetitive share
+        </span>
+        <span className="inline-flex items-center gap-1">
+          <span className="inline-block size-2 rounded bg-chart-1/50" /> Low repetitive share
+        </span>
       </div>
     </div>
   );
@@ -332,14 +499,27 @@ function BreakdownTooltip({ active, payload }: any) {
   return (
     <div className="rounded-md border border-border bg-surface-2 px-3 py-2 text-xs shadow-lg">
       <div className="font-medium">{r.key}</div>
-      <div className="num text-muted-foreground">{fmtHours(r.totalMinutes)} logged · {Math.round(r.repetitiveMinutes / Math.max(1, r.totalMinutes) * 100)}% repetitive</div>
-      <div className="num text-muted-foreground">{r.uniqueEmployees} people · {fmtINR(r.recoverableINR)}/mo recoverable</div>
+      <div className="num text-muted-foreground">
+        {fmtHours(r.totalMinutes)} logged ·{" "}
+        {Math.round((r.repetitiveMinutes / Math.max(1, r.totalMinutes)) * 100)}% repetitive
+      </div>
+      <div className="num text-muted-foreground">
+        {r.uniqueEmployees} people · {fmtINR(r.recoverableINR)}/mo recoverable
+      </div>
     </div>
   );
 }
 
 // -------- Priority --------
-function PriorityPanel({ data, filters, onPickTask }: { data: NormalisedData; filters: Filters; onPickTask: (t: string) => void }) {
+function PriorityPanel({
+  data,
+  filters,
+  onPickTask,
+}: {
+  data: NormalisedData;
+  filters: Filters;
+  onPickTask: (t: string) => void;
+}) {
   const rows = computePriority(data, filters).slice(0, 8);
   return (
     <div className="panel p-5">
@@ -347,7 +527,8 @@ function PriorityPanel({ data, filters, onPickTask }: { data: NormalisedData; fi
         <div>
           <div className="text-sm font-medium">Automate this first</div>
           <div className="text-xs text-muted-foreground">
-            Volume · repetitiveness · people affected · rupee impact — click a row to cross-filter the dashboard.
+            Volume · repetitiveness · people affected · rupee impact — click a row to cross-filter
+            the dashboard.
           </div>
         </div>
       </div>
@@ -360,7 +541,9 @@ function PriorityPanel({ data, filters, onPickTask }: { data: NormalisedData; fi
               filters.taskCategory === r.taskCategory ? "border-primary/50 bg-primary/5" : ""
             }`}
           >
-            <div className="num text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</div>
+            <div className="num text-xs text-muted-foreground">
+              {String(i + 1).padStart(2, "0")}
+            </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-baseline gap-2">
                 <span className="text-sm font-medium">{r.taskCategory}</span>
@@ -370,12 +553,18 @@ function PriorityPanel({ data, filters, onPickTask }: { data: NormalisedData; fi
               </div>
               <div className="mt-1.5 flex items-center gap-2">
                 <ScoreBar score={r.score} />
-                <span className="num shrink-0 text-[11px] text-muted-foreground">score {r.score.toFixed(2)}</span>
+                <span className="num shrink-0 text-[11px] text-muted-foreground">
+                  score {r.score.toFixed(2)}
+                </span>
               </div>
             </div>
             <div className="text-right">
-              <div className="num text-sm font-semibold text-primary">{fmtINR(r.recoverableINRPerMonth)}</div>
-              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">/ month</div>
+              <div className="num text-sm font-semibold text-primary">
+                {fmtINR(r.recoverableINRPerMonth)}
+              </div>
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                / month
+              </div>
             </div>
           </button>
         ))}
@@ -386,7 +575,10 @@ function PriorityPanel({ data, filters, onPickTask }: { data: NormalisedData; fi
 function ScoreBar({ score }: { score: number }) {
   return (
     <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-      <div className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent" style={{ width: `${Math.round(score * 100)}%` }} />
+      <div
+        className="h-full rounded-full bg-gradient-to-r from-primary via-primary to-accent"
+        style={{ width: `${Math.round(score * 100)}%` }}
+      />
     </div>
   );
 }
@@ -396,18 +588,41 @@ function TrendPanel({ data, filters }: { data: NormalisedData; filters: Filters 
   const { data: weekly, keys } = computeWeekly(data, filters, 5);
   return (
     <div className="panel p-5">
-      <div className="mb-2 flex items-center gap-2 text-sm font-medium"><TrendingUp className="size-4 text-accent" /> Week-over-week · top 5 tasks</div>
-      <div className="mb-3 text-xs text-muted-foreground">Minutes logged per week, filtered to current view.</div>
+      <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <TrendingUp className="size-4 text-accent" /> Week-over-week · top 5 tasks
+      </div>
+      <div className="mb-3 text-xs text-muted-foreground">
+        Minutes logged per week, filtered to current view.
+      </div>
       <div className="h-[220px]">
         <ResponsiveContainer>
           <LineChart data={weekly} margin={{ left: -12, right: 8, top: 4, bottom: 0 }}>
             <CartesianGrid stroke="var(--border)" strokeDasharray="2 3" />
             <XAxis dataKey="week" stroke="var(--muted-foreground)" fontSize={11} />
-            <YAxis stroke="var(--muted-foreground)" fontSize={11} tickFormatter={(v) => `${Math.round(v / 60)}h`} />
-            <Tooltip contentStyle={{ background: "var(--surface-2)", border: "1px solid var(--border)", borderRadius: 6, fontSize: 12 }} />
+            <YAxis
+              stroke="var(--muted-foreground)"
+              fontSize={11}
+              tickFormatter={(v) => `${Math.round(v / 60)}h`}
+            />
+            <Tooltip
+              contentStyle={{
+                background: "var(--surface-2)",
+                border: "1px solid var(--border)",
+                borderRadius: 6,
+                fontSize: 12,
+              }}
+            />
             <Legend wrapperStyle={{ fontSize: 11 }} />
             {keys.map((k, i) => (
-              <Line key={k} type="monotone" dataKey={k} stroke={CHART_COLORS[i % CHART_COLORS.length]} strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 5 }} />
+              <Line
+                key={k}
+                type="monotone"
+                dataKey={k}
+                stroke={CHART_COLORS[i % CHART_COLORS.length]}
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
             ))}
           </LineChart>
         </ResponsiveContainer>
@@ -421,8 +636,12 @@ function AnomalyPanel({ data, filters }: { data: NormalisedData; filters: Filter
   const anomalies = computeAnomalies(data, filters);
   return (
     <div className="panel p-5">
-      <div className="mb-2 flex items-center gap-2 text-sm font-medium"><AlertTriangle className="size-4 text-warning" /> Anomalies to know about</div>
-      <div className="mb-3 text-xs text-muted-foreground">Statistical outliers, terminations still logging, and steep WoW spikes.</div>
+      <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+        <AlertTriangle className="size-4 text-warning" /> Anomalies to know about
+      </div>
+      <div className="mb-3 text-xs text-muted-foreground">
+        Statistical outliers, terminations still logging, and steep WoW spikes.
+      </div>
       <div className="space-y-2">
         {anomalies.length === 0 && (
           <div className="rounded-md border border-border bg-surface-2/60 px-3 py-4 text-center text-xs text-muted-foreground">
@@ -441,7 +660,15 @@ function AnomalyPanel({ data, filters }: { data: NormalisedData; filters: Filter
 }
 
 // -------- Employees --------
-function EmployeePanel({ data, filters, setEmployee }: { data: NormalisedData; filters: Filters; setEmployee: (id: string | null) => void }) {
+function EmployeePanel({
+  data,
+  filters,
+  setEmployee,
+}: {
+  data: NormalisedData;
+  filters: Filters;
+  setEmployee: (id: string | null) => void;
+}) {
   const rows = useMemo(() => {
     const activity = applyFilters(data.activity, filters);
     const perEmp = new Map<string, { min: number; rep: number }>();
@@ -470,9 +697,13 @@ function EmployeePanel({ data, filters, setEmployee }: { data: NormalisedData; f
   return (
     <div className="panel p-5">
       <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm font-medium"><Users className="size-4 text-accent" /> People — click to drill down</div>
+        <div className="flex items-center gap-2 text-sm font-medium">
+          <Users className="size-4 text-accent" /> People — click to drill down
+        </div>
         {filters.employeeId && (
-          <button onClick={() => setEmployee(null)} className="chip">clear selection <X className="size-3" /></button>
+          <button onClick={() => setEmployee(null)} className="chip">
+            clear selection <X className="size-3" />
+          </button>
         )}
       </div>
       <div className="grid gap-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -500,8 +731,14 @@ function EmployeePanel({ data, filters, setEmployee }: { data: NormalisedData; f
                       <div className="flex items-center gap-2">
                         <span className={`num text-[10px] text-muted-foreground`}>{r.id}</span>
                         <span className="font-medium">{r.emp?.name ?? "(no HRMS record)"}</span>
-                        {orphan && <span className="chip !border-destructive/40 !text-destructive">orphan</span>}
-                        {r.emp?.status === "terminated" && <span className="chip !border-warning/40 !text-warning">terminated</span>}
+                        {orphan && (
+                          <span className="chip !border-destructive/40 !text-destructive">
+                            orphan
+                          </span>
+                        )}
+                        {r.emp?.status === "terminated" && (
+                          <span className="chip !border-warning/40 !text-warning">terminated</span>
+                        )}
                       </div>
                       <div className="text-[10px] text-muted-foreground">{r.emp?.role}</div>
                     </td>
@@ -515,7 +752,9 @@ function EmployeePanel({ data, filters, setEmployee }: { data: NormalisedData; f
           </table>
         </div>
         <div>
-          {selected?.employee ? <EmployeeDrilldown p={selected} /> : (
+          {selected?.employee ? (
+            <EmployeeDrilldown p={selected} />
+          ) : (
             <div className="flex h-full min-h-[220px] items-center justify-center rounded-md border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
               <div>
                 <ChevronRight className="mx-auto mb-2 size-5 text-muted-foreground" />
@@ -536,11 +775,18 @@ function EmployeeDrilldown({ p }: { p: ReturnType<typeof perEmployeeProfile> }) 
       <div className="flex items-baseline justify-between">
         <div>
           <div className="font-display text-2xl leading-tight">{emp.name}</div>
-          <div className="text-xs text-muted-foreground">{emp.role} · {emp.department}</div>
+          <div className="text-xs text-muted-foreground">
+            {emp.role} · {emp.department}
+          </div>
         </div>
         <div className="text-right">
-          <div className="num text-sm">{emp.annualINR ? fmtINR(emp.annualINR) : "no comp"}<span className="text-[10px] text-muted-foreground"> /yr</span></div>
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{emp.compSource !== "none" ? emp.compSource : "unpriced"}</div>
+          <div className="num text-sm">
+            {emp.annualINR ? fmtINR(emp.annualINR) : "no comp"}
+            <span className="text-[10px] text-muted-foreground"> /yr</span>
+          </div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            {emp.compSource !== "none" ? emp.compSource : "unpriced"}
+          </div>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-3 text-xs">
@@ -549,17 +795,28 @@ function EmployeeDrilldown({ p }: { p: ReturnType<typeof perEmployeeProfile> }) 
           <div className="num text-lg">{fmtHours(p.totalMinutes)}</div>
         </div>
         <div className="rounded border border-border/60 p-2">
-          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Repetitive share</div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            Repetitive share
+          </div>
           <div className="num text-lg">{Math.round(p.repetitiveShare * 100)}%</div>
-          <div className="text-[10px] text-muted-foreground">peer avg {Math.round(p.peerRepetitiveShare * 100)}%</div>
+          <div className="text-[10px] text-muted-foreground">
+            peer avg {Math.round(p.peerRepetitiveShare * 100)}%
+          </div>
         </div>
       </div>
       <div className="mt-4">
-        <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">Top repetitive tasks</div>
-        {p.topRepetitive.length === 0 && <div className="text-xs text-muted-foreground">No repetitive activity logged.</div>}
+        <div className="mb-2 text-[10px] uppercase tracking-widest text-muted-foreground">
+          Top repetitive tasks
+        </div>
+        {p.topRepetitive.length === 0 && (
+          <div className="text-xs text-muted-foreground">No repetitive activity logged.</div>
+        )}
         <div className="space-y-1">
           {p.topRepetitive.map(([task, min]) => (
-            <div key={task} className="flex items-center justify-between rounded bg-surface px-2 py-1.5 text-xs">
+            <div
+              key={task}
+              className="flex items-center justify-between rounded bg-surface px-2 py-1.5 text-xs"
+            >
               <span>{task}</span>
               <span className="num text-muted-foreground">{fmtHours(min)}</span>
             </div>
@@ -574,61 +831,120 @@ function EmployeeDrilldown({ p }: { p: ReturnType<typeof perEmployeeProfile> }) 
 function QualityDrawer({ data, onClose }: { data: NormalisedData; onClose: () => void }) {
   const q = data.quality;
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <div
         className="flex h-full w-full max-w-md flex-col overflow-hidden border-l border-border bg-surface"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <div className="flex items-center gap-2"><Database className="size-4 text-primary" /><span className="font-medium">Data quality</span></div>
-          <button onClick={onClose} className="rounded-md p-1 hover:bg-surface-2"><X className="size-4" /></button>
+          <div className="flex items-center gap-2">
+            <Database className="size-4 text-primary" />
+            <span className="font-medium">Data quality</span>
+          </div>
+          <button onClick={onClose} className="rounded-md p-1 hover:bg-surface-2">
+            <X className="size-4" />
+          </button>
         </div>
         <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5 text-xs">
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Activity CSV</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Activity CSV
+            </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Stat label="Raw rows" value={q.activityRaw} />
               <Stat label="Kept" value={q.activityKept} tone="ok" />
-              <Stat label="Dropped · dur ≤ 0" value={q.activityDropped.negativeOrZero} tone="warn" />
+              <Stat
+                label="Dropped · dur ≤ 0"
+                value={q.activityDropped.negativeOrZero}
+                tone="warn"
+              />
               <Stat label="Dropped · > 8h" value={q.activityDropped.tooLarge} tone="warn" />
-              <Stat label="Dropped · bad timestamp" value={q.activityDropped.badTimestamp} tone="warn" />
+              <Stat
+                label="Dropped · bad timestamp"
+                value={q.activityDropped.badTimestamp}
+                tone="warn"
+              />
               <Stat label="Dropped · duplicates" value={q.activityDropped.duplicates} tone="warn" />
-              <Stat label="Apps canonicalised" value={q.activityFixed.appsCanonicalised} tone="ok" />
-              <Stat label="Tasks canonicalised" value={q.activityFixed.tasksCanonicalised} tone="ok" />
-              <Stat label="Booleans normalised" value={q.activityFixed.booleansNormalised} tone="ok" />
+              <Stat
+                label="Apps canonicalised"
+                value={q.activityFixed.appsCanonicalised}
+                tone="ok"
+              />
+              <Stat
+                label="Tasks canonicalised"
+                value={q.activityFixed.tasksCanonicalised}
+                tone="ok"
+              />
+              <Stat
+                label="Booleans normalised"
+                value={q.activityFixed.booleansNormalised}
+                tone="ok"
+              />
             </div>
           </section>
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">HRMS join</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              HRMS join
+            </div>
             <div className="mt-2 grid grid-cols-2 gap-2">
               <Stat label="Raw records" value={q.employeesRaw} />
               <Stat label="Unique employees" value={q.employeesKept} />
               <Stat label="Duplicate IDs" value={q.duplicateIds.length} tone="warn" />
-              <Stat label="Orphans (activity, no HRMS)" value={q.activityIdsWithoutEmployee.length} tone="warn" />
-              <Stat label="HRMS w/o activity" value={q.employeesWithoutActivity.length} tone="warn" />
-              <Stat label="Comp conflicts resolved" value={q.compensationConflicts.length} tone="ok" />
+              <Stat
+                label="Orphans (activity, no HRMS)"
+                value={q.activityIdsWithoutEmployee.length}
+                tone="warn"
+              />
+              <Stat
+                label="HRMS w/o activity"
+                value={q.employeesWithoutActivity.length}
+                tone="warn"
+              />
+              <Stat
+                label="Comp conflicts resolved"
+                value={q.compensationConflicts.length}
+                tone="ok"
+              />
             </div>
             {q.duplicateIds.length > 0 && (
-              <p className="mt-2 text-muted-foreground">Duplicates: <span className="num">{q.duplicateIds.join(", ")}</span> — kept highest annual-INR equivalent with tenure as tiebreak.</p>
+              <p className="mt-2 text-muted-foreground">
+                Duplicates: <span className="num">{q.duplicateIds.join(", ")}</span> — kept highest
+                annual-INR equivalent with tenure as tiebreak.
+              </p>
             )}
             {q.activityIdsWithoutEmployee.length > 0 && (
-              <p className="mt-1 text-muted-foreground">Orphan IDs kept in activity totals, excluded from INR: <span className="num">{q.activityIdsWithoutEmployee.join(", ")}</span></p>
+              <p className="mt-1 text-muted-foreground">
+                Orphan IDs kept in activity totals, excluded from INR:{" "}
+                <span className="num">{q.activityIdsWithoutEmployee.join(", ")}</span>
+              </p>
             )}
             {q.employeesWithoutActivity.length > 0 && (
-              <p className="mt-1 text-muted-foreground">HRMS with no activity: <span className="num">{q.employeesWithoutActivity.join(", ")}</span></p>
+              <p className="mt-1 text-muted-foreground">
+                HRMS with no activity:{" "}
+                <span className="num">{q.employeesWithoutActivity.join(", ")}</span>
+              </p>
             )}
           </section>
           <section>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">Compensation conflicts</div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Compensation conflicts
+            </div>
             <div className="mt-2 space-y-2">
-              {q.compensationConflicts.length === 0 && <p className="text-muted-foreground">No conflicts.</p>}
+              {q.compensationConflicts.length === 0 && (
+                <p className="text-muted-foreground">No conflicts.</p>
+              )}
               {q.compensationConflicts.map((c) => (
                 <div key={c.id} className="rounded border border-border bg-surface-2/60 px-3 py-2">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{c.id}</span>
                     <span className="num text-primary">{fmtINR(c.chosen)}</span>
                   </div>
-                  <div className="mt-1 text-muted-foreground">candidates: <span className="num">{c.alternates.map(fmtINR).join(" · ")}</span></div>
+                  <div className="mt-1 text-muted-foreground">
+                    candidates: <span className="num">{c.alternates.map(fmtINR).join(" · ")}</span>
+                  </div>
                   <div className="text-[10px] text-muted-foreground">Strategy: {c.strategy}</div>
                 </div>
               ))}
@@ -639,8 +955,17 @@ function QualityDrawer({ data, onClose }: { data: NormalisedData; onClose: () =>
     </div>
   );
 }
-function Stat({ label, value, tone = "" }: { label: string; value: number; tone?: "" | "ok" | "warn" }) {
-  const color = tone === "ok" ? "text-success" : tone === "warn" ? "text-warning" : "text-foreground";
+function Stat({
+  label,
+  value,
+  tone = "",
+}: {
+  label: string;
+  value: number;
+  tone?: "" | "ok" | "warn";
+}) {
+  const color =
+    tone === "ok" ? "text-success" : tone === "warn" ? "text-warning" : "text-foreground";
   return (
     <div className="rounded border border-border bg-surface-2/50 px-3 py-2">
       <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
@@ -652,7 +977,10 @@ function Stat({ label, value, tone = "" }: { label: string; value: number; tone?
 function FooterMeta({ data }: { data: NormalisedData }) {
   return (
     <footer className="border-t border-border/70 py-6 text-center text-[11px] text-muted-foreground">
-      Data snapshot {data.meta.generatedAt ? new Date(data.meta.generatedAt).toISOString().slice(0, 10) : "—"} · source: {data.meta.source ?? "HRMS export"} · every headline number is traceable to its source rows.
+      Data snapshot{" "}
+      {data.meta.generatedAt ? new Date(data.meta.generatedAt).toISOString().slice(0, 10) : "—"} ·
+      source: {data.meta.source ?? "HRMS export"} · every headline number is traceable to its source
+      rows.
     </footer>
   );
 }

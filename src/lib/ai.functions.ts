@@ -52,7 +52,9 @@ export const askAssistant = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
-      throw new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), { status: 500 });
+      throw new Response(JSON.stringify({ error: "LOVABLE_API_KEY is not configured" }), {
+        status: 500,
+      });
     }
     const groundingBlock = `<dataset>\n${JSON.stringify(data.grounding, null, 2)}\n</dataset>`;
     const messages = [

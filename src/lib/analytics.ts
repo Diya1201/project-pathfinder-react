@@ -11,14 +11,14 @@ export const TASK_AUTOMATION_FACTOR: Record<string, number> = {
   "Vendor Portals": 0.6,
   "CRM Updates": 0.75,
   "Status Updates": 0.6,
-  "Reporting": 0.65,
+  Reporting: 0.65,
   "Lead Entry": 0.85,
   "Pipeline Review": 0.3,
   "Deck Building": 0.25,
   "Internal Communication": 0.15,
   "Client Communication": 0.1,
-  "Meetings": 0.1,
-  "Research": 0.2,
+  Meetings: 0.1,
+  Research: 0.2,
 };
 
 // Repetitive tasks not otherwise mapped: default 0.5. Non-repetitive: 0.1.
@@ -35,10 +35,12 @@ export interface Filters {
 }
 
 export const applyFilters = (rows: ActivityRow[], f: Filters): ActivityRow[] =>
-  rows.filter((r) =>
-    (!f.department || r.department === f.department) &&
-    (!f.taskCategory || r.taskCategory === f.taskCategory) &&
-    (!f.employeeId || r.employeeId === f.employeeId));
+  rows.filter(
+    (r) =>
+      (!f.department || r.department === f.department) &&
+      (!f.taskCategory || r.taskCategory === f.taskCategory) &&
+      (!f.employeeId || r.employeeId === f.employeeId),
+  );
 
 export interface Headline {
   recoverableMinutesPerMonth: number;
@@ -56,7 +58,9 @@ export const computeHeadline = (data: NormalisedData, f: Filters): Headline => {
   const rows = applyFilters(data.activity, f);
   const weeks = new Set(rows.map((r) => r.weekIndex)).size || 1;
   const totalMinutes = rows.reduce((s, r) => s + r.durationMinutes, 0);
-  const repetitiveMinutes = rows.filter((r) => r.isRepetitive).reduce((s, r) => s + r.durationMinutes, 0);
+  const repetitiveMinutes = rows
+    .filter((r) => r.isRepetitive)
+    .reduce((s, r) => s + r.durationMinutes, 0);
 
   // Per-employee recoverable
   const byEmp = new Map<string, { minutes: number; recoverableMinutes: number }>();
@@ -159,15 +163,23 @@ export const computePriority = (data: NormalisedData, f: Filters): PriorityRow[]
   const rows = applyFilters(data.activity, f);
   const weeks = new Set(rows.map((r) => r.weekIndex)).size || 1;
   const totalEmployees = new Set(rows.map((r) => r.employeeId)).size || 1;
-  const perTask = new Map<string, { min: number; repMin: number; emps: Set<string>; inr: number }>();
+  const perTask = new Map<
+    string,
+    { min: number; repMin: number; emps: Set<string>; inr: number }
+  >();
   for (const r of rows) {
-    const cur = perTask.get(r.taskCategory) ?? { min: 0, repMin: 0, emps: new Set<string>(), inr: 0 };
+    const cur = perTask.get(r.taskCategory) ?? {
+      min: 0,
+      repMin: 0,
+      emps: new Set<string>(),
+      inr: 0,
+    };
     cur.min += r.durationMinutes;
     if (r.isRepetitive) cur.repMin += r.durationMinutes;
     cur.emps.add(r.employeeId);
     const emp = data.employeeMap.get(r.employeeId);
     const factor = automationFactor(r.taskCategory, r.isRepetitive);
-    cur.inr += emp?.hourlyINR ? (r.durationMinutes * factor / 60) * emp.hourlyINR : 0;
+    cur.inr += emp?.hourlyINR ? ((r.durationMinutes * factor) / 60) * emp.hourlyINR : 0;
     perTask.set(r.taskCategory, cur);
   }
   const maxVol = Math.max(...Array.from(perTask.values()).map((v) => v.min), 1);
@@ -199,15 +211,25 @@ export interface WeeklyPoint {
   [k: string]: number | string;
 }
 
-export const computeWeekly = (data: NormalisedData, f: Filters, topN = 5): { data: WeeklyPoint[]; keys: string[] } => {
+export const computeWeekly = (
+  data: NormalisedData,
+  f: Filters,
+  topN = 5,
+): { data: WeeklyPoint[]; keys: string[] } => {
   const rows = applyFilters(data.activity, f);
   const totals = new Map<string, number>();
-  for (const r of rows) totals.set(r.taskCategory, (totals.get(r.taskCategory) ?? 0) + r.durationMinutes);
-  const keys = Array.from(totals.entries()).sort((a, b) => b[1] - a[1]).slice(0, topN).map(([k]) => k);
+  for (const r of rows)
+    totals.set(r.taskCategory, (totals.get(r.taskCategory) ?? 0) + r.durationMinutes);
+  const keys = Array.from(totals.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, topN)
+    .map(([k]) => k);
   const weekMap = new Map<number, WeeklyPoint>();
   for (const r of rows) {
     if (!keys.includes(r.taskCategory)) continue;
-    const cur = weekMap.get(r.weekIndex) ?? ({ week: `W${r.weekIndex + 1}`, weekIndex: r.weekIndex } as WeeklyPoint);
+    const cur =
+      weekMap.get(r.weekIndex) ??
+      ({ week: `W${r.weekIndex + 1}`, weekIndex: r.weekIndex } as WeeklyPoint);
     cur[r.taskCategory] = ((cur[r.taskCategory] as number) ?? 0) + r.durationMinutes;
     weekMap.set(r.weekIndex, cur);
   }
@@ -236,10 +258,15 @@ export const computeAnomalies = (data: NormalisedData, f: Filters): Anomaly[] =>
     if (r.isRepetitive) cur.rep += r.durationMinutes;
     perEmp.set(r.employeeId, cur);
   }
-  const shares = Array.from(perEmp.entries()).map(([id, v]) => ({ id, share: v.total ? v.rep / v.total : 0, total: v.total }));
+  const shares = Array.from(perEmp.entries()).map(([id, v]) => ({
+    id,
+    share: v.total ? v.rep / v.total : 0,
+    total: v.total,
+  }));
   if (shares.length > 2) {
     const mean = shares.reduce((s, x) => s + x.share, 0) / shares.length;
-    const sd = Math.sqrt(shares.reduce((s, x) => s + (x.share - mean) ** 2, 0) / shares.length) || 1;
+    const sd =
+      Math.sqrt(shares.reduce((s, x) => s + (x.share - mean) ** 2, 0) / shares.length) || 1;
     for (const s of shares) {
       const z = (s.share - mean) / sd;
       if (z > 1.5 && s.total > 60) {
@@ -307,18 +334,27 @@ export const perEmployeeProfile = (data: NormalisedData, employeeId: string) => 
   const totalMin = rows.reduce((s, r) => s + r.durationMinutes, 0);
   const repMin = rows.filter((r) => r.isRepetitive).reduce((s, r) => s + r.durationMinutes, 0);
   const byTask = new Map<string, number>();
-  for (const r of rows) if (r.isRepetitive) byTask.set(r.taskCategory, (byTask.get(r.taskCategory) ?? 0) + r.durationMinutes);
-  const topRepetitive = Array.from(byTask.entries()).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  for (const r of rows)
+    if (r.isRepetitive)
+      byTask.set(r.taskCategory, (byTask.get(r.taskCategory) ?? 0) + r.durationMinutes);
+  const topRepetitive = Array.from(byTask.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
 
   // Peer comparison: same role
   const peers = emp
     ? data.employees.filter((e) => e.role === emp.role && e.id !== emp.id).map((e) => e.id)
     : [];
   const peerRows = data.activity.filter((r) => peers.includes(r.employeeId));
-  const peerMinPerHead = peers.length ? peerRows.reduce((s, r) => s + r.durationMinutes, 0) / peers.length : 0;
+  const peerMinPerHead = peers.length
+    ? peerRows.reduce((s, r) => s + r.durationMinutes, 0) / peers.length
+    : 0;
   const peerRepShare = peerRows.length
     ? peerRows.filter((r) => r.isRepetitive).reduce((s, r) => s + r.durationMinutes, 0) /
-      Math.max(1, peerRows.reduce((s, r) => s + r.durationMinutes, 0))
+      Math.max(
+        1,
+        peerRows.reduce((s, r) => s + r.durationMinutes, 0),
+      )
     : 0;
 
   return {
@@ -352,14 +388,17 @@ export interface EmployeeActivity {
 const computeEmployeeActivity = (data: NormalisedData, f: Filters): EmployeeActivity[] => {
   const rows = applyFilters(data.activity, f);
   const weeks = new Set(rows.map((r) => r.weekIndex)).size || 1;
-  
+
   // Map: employeeId -> aggregated activity
-  const perEmp = new Map<string, {
-    total: number;
-    repetitive: number;
-    tasks: Map<string, number>;
-  }>();
-  
+  const perEmp = new Map<
+    string,
+    {
+      total: number;
+      repetitive: number;
+      tasks: Map<string, number>;
+    }
+  >();
+
   // Aggregate all activity per employee
   for (const row of rows) {
     const agg = perEmp.get(row.employeeId) ?? {
@@ -367,19 +406,19 @@ const computeEmployeeActivity = (data: NormalisedData, f: Filters): EmployeeActi
       repetitive: 0,
       tasks: new Map(),
     };
-    
+
     agg.total += row.durationMinutes;
     if (row.isRepetitive) agg.repetitive += row.durationMinutes;
     agg.tasks.set(row.taskCategory, (agg.tasks.get(row.taskCategory) ?? 0) + row.durationMinutes);
-    
+
     perEmp.set(row.employeeId, agg);
   }
-  
+
   // Format for grounding with top tasks per employee
   return Array.from(perEmp.entries())
     .map(([id, agg]) => {
       const emp = data.employeeMap.get(id);
-      
+
       // Top 5 tasks by time
       const topTasks = Array.from(agg.tasks.entries())
         .sort((a, b) => b[1] - a[1])
@@ -389,7 +428,7 @@ const computeEmployeeActivity = (data: NormalisedData, f: Filters): EmployeeActi
           minutes,
           hours: +(minutes / 60).toFixed(1),
         }));
-      
+
       // Calculate recoverable time using automation factors
       let recoverableMinutes = 0;
       for (const row of rows) {
@@ -400,7 +439,7 @@ const computeEmployeeActivity = (data: NormalisedData, f: Filters): EmployeeActi
       }
       const recoverablePerMonth = (recoverableMinutes / weeks) * WEEKS_PER_MONTH;
       const recoverableINR = emp?.hourlyINR ? (recoverablePerMonth / 60) * emp.hourlyINR : 0;
-      
+
       return {
         id,
         name: emp?.name ?? id,
@@ -411,7 +450,7 @@ const computeEmployeeActivity = (data: NormalisedData, f: Filters): EmployeeActi
         repetitive_minutes: agg.repetitive,
         repetitive_share: agg.total > 0 ? +(agg.repetitive / agg.total).toFixed(2) : 0,
         top_tasks: topTasks,
-        hours_per_month: +((agg.total / weeks) * WEEKS_PER_MONTH / 60).toFixed(1),
+        hours_per_month: +(((agg.total / weeks) * WEEKS_PER_MONTH) / 60).toFixed(1),
         recoverable_hours_per_month: +(recoverablePerMonth / 60).toFixed(1),
         recoverable_inr_per_month: Math.round(recoverableINR),
         hourly_inr: emp?.hourlyINR ?? null,
@@ -430,9 +469,15 @@ export const groundingSnapshot = (data: NormalisedData, f: Filters) => {
   const anomalies = computeAnomalies(data, f);
   const employee_activity = computeEmployeeActivity(data, f);
   const employees = data.employees.map((e) => ({
-    id: e.id, name: e.name, department: e.department, role: e.role,
-    hourly_inr: e.hourlyINR, annual_inr: e.annualINR, tenure_months: e.tenureMonths,
-    status: e.status, comp_source: e.compSource,
+    id: e.id,
+    name: e.name,
+    department: e.department,
+    role: e.role,
+    hourly_inr: e.hourlyINR,
+    annual_inr: e.annualINR,
+    tenure_months: e.tenureMonths,
+    status: e.status,
+    comp_source: e.compSource,
   }));
   return {
     filters: f,
@@ -452,9 +497,22 @@ export const groundingSnapshot = (data: NormalisedData, f: Filters) => {
       unique_employees: p.concentration,
       recoverable_inr_per_month: Math.round(p.recoverableINRPerMonth),
     })),
-    breakdown_by_task: breakdownTask.map((b) => ({ task: b.key, minutes: b.totalMinutes, repetitive_minutes: b.repetitiveMinutes, employees: b.uniqueEmployees })),
-    breakdown_by_app: breakdownApp.map((b) => ({ app: b.key, minutes: b.totalMinutes, employees: b.uniqueEmployees })),
-    breakdown_by_department: breakdownDept.map((b) => ({ department: b.key, minutes: b.totalMinutes, repetitive_minutes: b.repetitiveMinutes })),
+    breakdown_by_task: breakdownTask.map((b) => ({
+      task: b.key,
+      minutes: b.totalMinutes,
+      repetitive_minutes: b.repetitiveMinutes,
+      employees: b.uniqueEmployees,
+    })),
+    breakdown_by_app: breakdownApp.map((b) => ({
+      app: b.key,
+      minutes: b.totalMinutes,
+      employees: b.uniqueEmployees,
+    })),
+    breakdown_by_department: breakdownDept.map((b) => ({
+      department: b.key,
+      minutes: b.totalMinutes,
+      repetitive_minutes: b.repetitiveMinutes,
+    })),
     anomalies,
     employee_activity,
     employees,
