@@ -20,6 +20,7 @@ const STARTERS = [
 
 // Render inline citations like [source: foo.bar = 12] as chips.
 function renderContent(text: string) {
+  if (!text) return null;
   const parts = text.split(/(\[source:[^\]]+\])/g);
   return parts.map((p, i) => {
     if (p.startsWith("[source:")) {
@@ -44,7 +45,8 @@ export function AIChat({ data, filters }: { data: NormalisedData; filters: Filte
       setMessages(nextMessages);
       const grounding = groundingSnapshot(data, filters);
       const res = await ask({ data: { messages: nextMessages, grounding } });
-      setMessages((m) => [...m, { role: "assistant", content: res.content }]);
+      const content = res?.content || "No response received from AI";
+      setMessages((m) => [...m, { role: "assistant", content }]);
       return res;
     },
   });
