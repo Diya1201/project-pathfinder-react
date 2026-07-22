@@ -77,11 +77,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Workforce Pulse" },
+      { title: "Workforce Pulse — where is the time & money going?" },
       {
         name: "description",
-        content: "COO-facing workforce analytics: recoverable hours, INR impact, and grounded AI.",
+        content: "COO-facing analytics on 4 weeks of activity data joined against HRMS. Recoverable hours, INR impact, automation priority and a grounded AI copilot.",
       },
+      { property: "og:title", content: "Workforce Pulse — where is the time & money going?" },
+      { name: "twitter:title", content: "Workforce Pulse — where is the time & money going?" },
+      { property: "og:description", content: "COO-facing analytics on 4 weeks of activity data joined against HRMS. Recoverable hours, INR impact, automation priority and a grounded AI copilot." },
+      { name: "twitter:description", content: "COO-facing analytics on 4 weeks of activity data joined against HRMS. Recoverable hours, INR impact, automation priority and a grounded AI copilot." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6728ec42-aa64-488c-b7b4-acc95da3dbab/id-preview-e80ab946--6a9d9600-4410-484e-adde-6ab3d63a7d93.lovable.app-1784734692859.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/6728ec42-aa64-488c-b7b4-acc95da3dbab/id-preview-e80ab946--6a9d9600-4410-484e-adde-6ab3d63a7d93.lovable.app-1784734692859.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },

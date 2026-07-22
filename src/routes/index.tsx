@@ -57,7 +57,7 @@ export const Route = createFileRoute("/")({
       {
         property: "og:description",
         content:
-          "Recoverable hours, INR impact, automation priority and a grounded AI copilot for a 200-person company.",
+          "COO-facing analytics on 4 weeks of activity data joined against HRMS. Recoverable hours, INR impact, automation priority and a grounded AI copilot.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
