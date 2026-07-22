@@ -45,8 +45,7 @@ export function AIChat({ data, filters }: { data: NormalisedData; filters: Filte
       setMessages(nextMessages);
       const grounding = groundingSnapshot(data, filters);
       const res = await ask({ data: { messages: nextMessages, grounding } });
-      const content = res?.content || "No response received from AI";
-      setMessages((m) => [...m, { role: "assistant", content }]);
+      setMessages((m) => [...m, { role: "assistant", content: res.content || "Error: No response from server" }]);
       return res;
     },
   });
