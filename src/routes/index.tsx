@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -118,7 +118,28 @@ function Dashboard() {
       </div>
     );
   }
-  const data = query.data;
+  const demoData = query.data;
+  const uploadedData = useMemo(() => {
+    if (!uploaded) return null;
+    try {
+      return normaliseAll(uploaded.employeesJson, uploaded.activityCsvText);
+    } catch (e) {
+      console.error("[UploadDataset] normalisation failed", e);
+      return null;
+    }
+  }, [uploaded]);
+  const data = uploadedData ?? demoData;
+  const usingUploaded = uploadedData != null;
+
+  // Reset filters when switching datasets to avoid stale selections.
+  const datasetKey = usingUploaded ? "uploaded" : "demo";
+  const lastKeyRef = useRef(datasetKey);
+  if (lastKeyRef.current !== datasetKey) {
+    lastKeyRef.current = datasetKey;
+    if (filters.department || filters.taskCategory || filters.employeeId) {
+      setFilters({ department: null, taskCategory: null, employeeId: null });
+    }
+  }
 
   const clearFilter = (k: keyof Filters) => setFilters((f) => ({ ...f, [k]: null }));
   const setFilter = (k: keyof Filters, v: string | null) =>
@@ -146,10 +167,15 @@ function Dashboard() {
               });
             }}
           />
-          {uploaded && (
+          {usingUploaded ? (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/5 px-2.5 py-1 text-[11px] text-success">
+              Dashboard is now driven by your uploaded dataset ·{" "}
+              {data.employees.length.toLocaleString()} employees ·{" "}
+              {data.activity.length.toLocaleString()} activity rows
+            </div>
+          ) : (
             <div className="mt-2 text-[11px] text-muted-foreground">
-              Uploaded dataset staged in memory ({uploaded.activityRows.length.toLocaleString()}{" "}
-              activity rows). Analytics below still reflect the built-in dataset.
+              Currently showing the bundled demo dataset. Upload files above to replace it.
             </div>
           )}
         </div>
