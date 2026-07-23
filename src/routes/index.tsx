@@ -43,6 +43,7 @@ import {
 import type { Dimension, Filters } from "@/lib/analytics";
 import { AIChat } from "@/components/AIChat";
 import { exportExecutivePDF } from "@/lib/export-pdf";
+import { UploadDataset, type UploadedDataset } from "@/components/UploadDataset";
 
 export const Route = createFileRoute("/")({
   head: () => ({
