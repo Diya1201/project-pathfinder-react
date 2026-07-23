@@ -167,10 +167,15 @@ function Dashboard() {
               });
             }}
           />
-          {uploaded && (
+          {usingUploaded ? (
+            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/5 px-2.5 py-1 text-[11px] text-success">
+              Dashboard is now driven by your uploaded dataset ·{" "}
+              {data.employees.length.toLocaleString()} employees ·{" "}
+              {data.activity.length.toLocaleString()} activity rows
+            </div>
+          ) : (
             <div className="mt-2 text-[11px] text-muted-foreground">
-              Uploaded dataset staged in memory ({uploaded.activityRows.length.toLocaleString()}{" "}
-              activity rows). Analytics below still reflect the built-in dataset.
+              Currently showing the bundled demo dataset. Upload files above to replace it.
             </div>
           )}
         </div>
