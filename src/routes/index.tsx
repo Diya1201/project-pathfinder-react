@@ -118,7 +118,28 @@ function Dashboard() {
       </div>
     );
   }
-  const data = query.data;
+  const demoData = query.data;
+  const uploadedData = useMemo(() => {
+    if (!uploaded) return null;
+    try {
+      return normaliseAll(uploaded.employeesJson, uploaded.activityCsvText);
+    } catch (e) {
+      console.error("[UploadDataset] normalisation failed", e);
+      return null;
+    }
+  }, [uploaded]);
+  const data = uploadedData ?? demoData;
+  const usingUploaded = uploadedData != null;
+
+  // Reset filters when switching datasets to avoid stale selections.
+  const datasetKey = usingUploaded ? "uploaded" : "demo";
+  const lastKeyRef = useRef(datasetKey);
+  if (lastKeyRef.current !== datasetKey) {
+    lastKeyRef.current = datasetKey;
+    if (filters.department || filters.taskCategory || filters.employeeId) {
+      setFilters({ department: null, taskCategory: null, employeeId: null });
+    }
+  }
 
   const clearFilter = (k: keyof Filters) => setFilters((f) => ({ ...f, [k]: null }));
   const setFilter = (k: keyof Filters, v: string | null) =>
