@@ -100,6 +100,7 @@ function Dashboard() {
   const [dim, setDim] = useState<Dimension>("taskCategory");
   const [showQuality, setShowQuality] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
+  const [uploaded, setUploaded] = useState<UploadedDataset | null>(null);
 
   if (query.isLoading) {
     return (
