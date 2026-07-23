@@ -43,6 +43,7 @@ import {
 import type { Dimension, Filters } from "@/lib/analytics";
 import { AIChat } from "@/components/AIChat";
 import { exportExecutivePDF } from "@/lib/export-pdf";
+import { UploadDataset, type UploadedDataset } from "@/components/UploadDataset";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -99,6 +100,7 @@ function Dashboard() {
   const [dim, setDim] = useState<Dimension>("taskCategory");
   const [showQuality, setShowQuality] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
+  const [uploaded, setUploaded] = useState<UploadedDataset | null>(null);
 
   if (query.isLoading) {
     return (
@@ -133,6 +135,25 @@ function Dashboard() {
       />
 
       <main className="mx-auto max-w-[1440px] px-4 pb-24 pt-6 md:px-8">
+        <div className="mb-6">
+          <UploadDataset
+            onLoaded={(d) => {
+              setUploaded(d);
+              console.info("[UploadDataset] loaded", {
+                employees: d.employeesFileName,
+                activity: d.activityFileName,
+                activityRows: d.activityRows.length,
+              });
+            }}
+          />
+          {uploaded && (
+            <div className="mt-2 text-[11px] text-muted-foreground">
+              Uploaded dataset staged in memory ({uploaded.activityRows.length.toLocaleString()}{" "}
+              activity rows). Analytics below still reflect the built-in dataset.
+            </div>
+          )}
+        </div>
+
         {(filters.department || filters.taskCategory || filters.employeeId) && (
           <FilterBar filters={filters} onClear={clearFilter} data={data} />
         )}
