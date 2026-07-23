@@ -135,6 +135,25 @@ function Dashboard() {
       />
 
       <main className="mx-auto max-w-[1440px] px-4 pb-24 pt-6 md:px-8">
+        <div className="mb-6">
+          <UploadDataset
+            onLoaded={(d) => {
+              setUploaded(d);
+              console.info("[UploadDataset] loaded", {
+                employees: d.employeesFileName,
+                activity: d.activityFileName,
+                activityRows: d.activityRows.length,
+              });
+            }}
+          />
+          {uploaded && (
+            <div className="mt-2 text-[11px] text-muted-foreground">
+              Uploaded dataset staged in memory ({uploaded.activityRows.length.toLocaleString()}{" "}
+              activity rows). Analytics below still reflect the built-in dataset.
+            </div>
+          )}
+        </div>
+
         {(filters.department || filters.taskCategory || filters.employeeId) && (
           <FilterBar filters={filters} onClear={clearFilter} data={data} />
         )}
