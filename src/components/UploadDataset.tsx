@@ -248,12 +248,33 @@ export function UploadDataset({ onLoaded }: Props) {
         </div>
         <button
           onClick={handleLoad}
-          disabled={!bothReady}
+          disabled={!bothReady || anyProcessing}
           className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-40"
         >
-          Load dataset
+          {anyProcessing ? (
+            <>
+              <Loader2 className="size-3.5 animate-spin" /> Parsing…
+            </>
+          ) : (
+            "Load dataset"
+          )}
         </button>
       </div>
+
+      {loaded && bothReady && (
+        <div className="mb-3 flex items-start gap-2 rounded-md border border-success/40 bg-success/10 px-3 py-2 text-xs text-success">
+          <CheckCircle2 className="mt-0.5 size-3.5 shrink-0" />
+          <div>
+            <div className="font-medium">Dataset loaded successfully</div>
+            <div className="mt-0.5 text-foreground/80">
+              <span className="num">{employeeCount.toLocaleString()}</span> employees ·{" "}
+              <span className="num">{activityCount.toLocaleString()}</span> activity records parsed
+              from <code className="text-foreground/90">{slots.employees.file?.name}</code> and{" "}
+              <code className="text-foreground/90">{slots.activity.file?.name}</code>.
+            </div>
+          </div>
+        </div>
+      )}
 
       <div
         onDragOver={(e) => {
