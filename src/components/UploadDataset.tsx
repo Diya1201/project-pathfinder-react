@@ -62,82 +62,125 @@ export function UploadDataset({ onLoaded }: Props) {
   const [loaded, setLoaded] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
-  const processFile = useCallback(async (file: File) => {
-    setGlobalError(null);
-    const kind = detectKind(file);
-    if (!kind) {
-      setGlobalError(
-        `"${file.name}" is not accepted. Please upload exactly "employees.json" and "activity_logs.csv".`,
-      );
-      return;
-    }
-    const expected = EXPECTED[kind];
-    const ext = file.name.split(".").pop()?.toLowerCase();
-    if (ext !== expected.ext) {
-      setSlots((s) => ({
-        ...s,
-        [kind]: { file, parsed: null, error: `Expected .${expected.ext} extension.` },
-      }));
-      return;
-    }
+  const setSlot = useCallback((kind: FileKind, patch: Partial<SlotState>) => {
+    setSlots((s) => ({ ...s, [kind]: { ...s[kind], ...patch } }));
+  }, []);
 
-    try {
-      const text = await file.text();
-      if (kind === "employees") {
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(text);
-        } catch (e) {
-          setSlots((s) => ({
-            ...s,
-            employees: {
-              file,
+  const processFile = useCallback(
+    async (file: File) => {
+      setGlobalError(null);
+      setLoaded(false);
+      const kind = detectKind(file);
+      if (!kind) {
+        setGlobalError(
+          `"${file.name}" is not accepted. Please upload exactly "employees.json" and "activity_logs.csv".`,
+        );
+        return;
+      }
+      const expected = EXPECTED[kind];
+      const ext = file.name.split(".").pop()?.toLowerCase();
+      if (ext !== expected.ext) {
+        setSlot(kind, {
+          file,
+          parsed: null,
+          error: `Expected .${expected.ext} extension.`,
+          progress: 0,
+          processing: false,
+        });
+        return;
+      }
+
+      // Start processing
+      setSlot(kind, {
+        file,
+        parsed: null,
+        error: null,
+        progress: 5,
+        processing: true,
+      });
+
+      try {
+        // Stream read with progress
+        const reader = file.stream().getReader();
+        const total = file.size || 1;
+        let received = 0;
+        const chunks: Uint8Array[] = [];
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          if (value) {
+            chunks.push(value);
+            received += value.byteLength;
+            const pct = Math.min(70, Math.round((received / total) * 70));
+            setSlot(kind, { progress: pct });
+          }
+        }
+        const text = new TextDecoder().decode(
+          await new Blob(chunks as BlobPart[]).arrayBuffer(),
+        );
+        setSlot(kind, { progress: 80 });
+
+        if (kind === "employees") {
+          let parsed: unknown;
+          try {
+            parsed = JSON.parse(text);
+          } catch (e) {
+            setSlot("employees", {
               parsed: null,
               error: `Invalid JSON: ${(e as Error).message}`,
-            },
-          }));
-          return;
-        }
-        setSlots((s) => ({
-          ...s,
-          employees: { file, parsed, error: null },
-        }));
-      } else {
-        const result = Papa.parse<Record<string, string>>(text, {
-          header: true,
-          skipEmptyLines: true,
-          transformHeader: (h) => h.trim(),
-        });
-        if (result.errors && result.errors.length > 0) {
-          setSlots((s) => ({
-            ...s,
-            activity: {
-              file,
+              progress: 0,
+              processing: false,
+            });
+            return;
+          }
+          setSlot("employees", {
+            parsed,
+            error: null,
+            progress: 100,
+            processing: false,
+          });
+        } else {
+          const result = Papa.parse<Record<string, string>>(text, {
+            header: true,
+            skipEmptyLines: true,
+            transformHeader: (h) => h.trim(),
+          });
+          if (result.errors && result.errors.length > 0) {
+            setSlot("activity", {
               parsed: null,
               error: `Invalid CSV: ${result.errors[0].message} (row ${result.errors[0].row ?? "?"})`,
-            },
-          }));
-          return;
+              progress: 0,
+              processing: false,
+            });
+            return;
+          }
+          if (!result.data || result.data.length === 0) {
+            setSlot("activity", {
+              parsed: null,
+              error: "CSV appears to be empty.",
+              progress: 0,
+              processing: false,
+            });
+            return;
+          }
+          setSlot("activity", {
+            parsed: { text, rows: result.data },
+            error: null,
+            progress: 100,
+            processing: false,
+          });
         }
-        if (!result.data || result.data.length === 0) {
-          setSlots((s) => ({
-            ...s,
-            activity: { file, parsed: null, error: "CSV appears to be empty." },
-          }));
-          return;
-        }
-        setSlots((s) => ({
-          ...s,
-          activity: { file, parsed: { text, rows: result.data }, error: null },
-        }));
+      } catch (e) {
+        setSlot(kind, {
+          parsed: null,
+          error: `Could not read file: ${(e as Error).message}`,
+          progress: 0,
+          processing: false,
+        });
       }
-    } catch (e) {
-      setSlots((s) => ({
-        ...s,
-        [kind]: { file, parsed: null, error: `Could not read file: ${(e as Error).message}` },
-      }));
-    }
-  }, []);
+    },
+    [setSlot],
+  );
 
   const handleFiles = useCallback(
     async (files: FileList | File[]) => {
@@ -153,26 +196,43 @@ export function UploadDataset({ onLoaded }: Props) {
     if (e.dataTransfer.files?.length) handleFiles(e.dataTransfer.files);
   };
 
-  const clearSlot = (k: FileKind) =>
-    setSlots((s) => ({ ...s, [k]: { file: null, parsed: null, error: null } }));
+  const clearSlot = (k: FileKind) => {
+    setLoaded(false);
+    setSlots((s) => ({ ...s, [k]: { ...EMPTY_SLOT } }));
+  };
 
+  const anyProcessing = slots.employees.processing || slots.activity.processing;
   const bothReady =
     slots.employees.parsed != null &&
     slots.activity.parsed != null &&
     !slots.employees.error &&
-    !slots.activity.error;
+    !slots.activity.error &&
+    !anyProcessing;
+
+  // Derived counts
+  const activityParsed = slots.activity.parsed as
+    | { text: string; rows: Record<string, string>[] }
+    | null;
+  const employeesParsed = slots.employees.parsed as
+    | { employees?: unknown[]; data?: { employees?: unknown[] } }
+    | null;
+  const employeeCount = employeesParsed
+    ? (employeesParsed.employees ?? employeesParsed.data?.employees ?? []).length
+    : 0;
+  const activityCount = activityParsed?.rows.length ?? 0;
 
   const handleLoad = () => {
-    if (!bothReady) return;
-    const activity = slots.activity.parsed as { text: string; rows: Record<string, string>[] };
+    if (!bothReady || !activityParsed) return;
     onLoaded?.({
       employeesJson: slots.employees.parsed,
-      activityCsvText: activity.text,
-      activityRows: activity.rows,
+      activityCsvText: activityParsed.text,
+      activityRows: activityParsed.rows,
       employeesFileName: slots.employees.file!.name,
       activityFileName: slots.activity.file!.name,
     });
+    setLoaded(true);
   };
+
 
   return (
     <section className="panel p-5">
