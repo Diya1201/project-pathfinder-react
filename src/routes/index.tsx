@@ -100,7 +100,33 @@ function Dashboard() {
   const [dim, setDim] = useState<Dimension>("taskCategory");
   const [showQuality, setShowQuality] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
-  const [uploaded, setUploaded] = useState<UploadedDataset | null>(null);
+  const [uploaded, setUploaded] = useState<UploadedDataset | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem("workforce-pulse:uploaded-dataset");
+      if (!raw) return null;
+      return JSON.parse(raw) as UploadedDataset;
+    } catch (e) {
+      console.warn("[UploadDataset] failed to restore from localStorage", e);
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (uploaded) {
+        window.localStorage.setItem(
+          "workforce-pulse:uploaded-dataset",
+          JSON.stringify(uploaded),
+        );
+      } else {
+        window.localStorage.removeItem("workforce-pulse:uploaded-dataset");
+      }
+    } catch (e) {
+      console.warn("[UploadDataset] failed to persist to localStorage", e);
+    }
+  }, [uploaded]);
 
   const uploadedData = useMemo(() => {
     if (!uploaded) return null;
