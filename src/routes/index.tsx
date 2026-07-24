@@ -193,10 +193,18 @@ function Dashboard() {
             }}
           />
           {usingUploaded ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/5 px-2.5 py-1 text-[11px] text-success">
-              Dashboard is now driven by your uploaded dataset ·{" "}
-              {data.employees.length.toLocaleString()} employees ·{" "}
-              {data.activity.length.toLocaleString()} activity rows
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/5 px-2.5 py-1 text-[11px] text-success">
+                Dashboard is now driven by your uploaded dataset ·{" "}
+                {data.employees.length.toLocaleString()} employees ·{" "}
+                {data.activity.length.toLocaleString()} activity rows
+              </div>
+              <button
+                onClick={() => setUploaded(null)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] text-foreground/85 transition hover:border-primary/40 hover:text-foreground"
+              >
+                <X className="size-3" /> Reset to Demo Data
+              </button>
             </div>
           ) : (
             <div className="mt-2 text-[11px] text-muted-foreground">
