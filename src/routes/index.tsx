@@ -27,6 +27,8 @@ import {
   Users,
   X,
   ChevronDown,
+  Sun,
+  Moon,
 } from "lucide-react";
 
 import { normaliseAll, fmtINR, fmtHours } from "@/lib/normalize";
@@ -280,6 +282,21 @@ function Header({
   onOpenQuality: () => void;
 }) {
   const dq = data.quality;
+  const [theme, setTheme] = useState<"dark" | "light">(() => {
+    if (typeof window === "undefined") return "dark";
+    return (window.localStorage.getItem("workforce-pulse:theme") as "dark" | "light") ?? "dark";
+  });
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const root = document.documentElement;
+    root.classList.toggle("light", theme === "light");
+    root.classList.toggle("dark", theme === "dark");
+    try {
+      window.localStorage.setItem("workforce-pulse:theme", theme);
+    } catch {
+      /* noop */
+    }
+  }, [theme]);
   return (
     <header className="sticky top-0 z-30 border-b border-border/80 bg-background/85 backdrop-blur">
       <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-4 py-3 md:px-8">
@@ -299,6 +316,14 @@ function Header({
           </div>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5 text-xs text-foreground/85 transition hover:border-primary/40 hover:text-foreground"
+            aria-label="Toggle theme"
+            title={theme === "dark" ? "Switch to light theme" : "Switch to dark theme"}
+          >
+            {theme === "dark" ? <Sun className="size-3.5" /> : <Moon className="size-3.5" />}
+          </button>
           <button
             onClick={onOpenQuality}
             className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-3 py-1.5 text-xs text-foreground/85 transition hover:border-primary/40 hover:text-foreground"
