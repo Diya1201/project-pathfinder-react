@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BarChart,
   Bar,
@@ -100,7 +100,33 @@ function Dashboard() {
   const [dim, setDim] = useState<Dimension>("taskCategory");
   const [showQuality, setShowQuality] = useState(false);
   const [methodOpen, setMethodOpen] = useState(false);
-  const [uploaded, setUploaded] = useState<UploadedDataset | null>(null);
+  const [uploaded, setUploaded] = useState<UploadedDataset | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = window.localStorage.getItem("workforce-pulse:uploaded-dataset");
+      if (!raw) return null;
+      return JSON.parse(raw) as UploadedDataset;
+    } catch (e) {
+      console.warn("[UploadDataset] failed to restore from localStorage", e);
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      if (uploaded) {
+        window.localStorage.setItem(
+          "workforce-pulse:uploaded-dataset",
+          JSON.stringify(uploaded),
+        );
+      } else {
+        window.localStorage.removeItem("workforce-pulse:uploaded-dataset");
+      }
+    } catch (e) {
+      console.warn("[UploadDataset] failed to persist to localStorage", e);
+    }
+  }, [uploaded]);
 
   const uploadedData = useMemo(() => {
     if (!uploaded) return null;
@@ -167,10 +193,18 @@ function Dashboard() {
             }}
           />
           {usingUploaded ? (
-            <div className="mt-2 inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/5 px-2.5 py-1 text-[11px] text-success">
-              Dashboard is now driven by your uploaded dataset ·{" "}
-              {data.employees.length.toLocaleString()} employees ·{" "}
-              {data.activity.length.toLocaleString()} activity rows
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 rounded-md border border-success/40 bg-success/5 px-2.5 py-1 text-[11px] text-success">
+                Dashboard is now driven by your uploaded dataset ·{" "}
+                {data.employees.length.toLocaleString()} employees ·{" "}
+                {data.activity.length.toLocaleString()} activity rows
+              </div>
+              <button
+                onClick={() => setUploaded(null)}
+                className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-2.5 py-1 text-[11px] text-foreground/85 transition hover:border-primary/40 hover:text-foreground"
+              >
+                <X className="size-3" /> Reset to Demo Data
+              </button>
             </div>
           ) : (
             <div className="mt-2 text-[11px] text-muted-foreground">
