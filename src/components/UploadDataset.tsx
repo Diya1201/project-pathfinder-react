@@ -350,8 +350,22 @@ function SlotCard({
   slot: SlotState;
   onClear: () => void;
 }) {
-  const ok = slot.parsed != null && !slot.error;
+  const ok = slot.parsed != null && !slot.error && !slot.processing;
   const err = !!slot.error;
+  const busy = slot.processing;
+
+  // Compute record count for this slot
+  let count: number | null = null;
+  if (ok) {
+    if (title.endsWith(".json")) {
+      const p = slot.parsed as { employees?: unknown[]; data?: { employees?: unknown[] } };
+      count = (p.employees ?? p.data?.employees ?? []).length;
+    } else {
+      const p = slot.parsed as { rows: unknown[] };
+      count = p.rows.length;
+    }
+  }
+
   return (
     <div
       className={`rounded-md border px-3 py-2 text-xs ${
@@ -359,7 +373,9 @@ function SlotCard({
           ? "border-success/40 bg-success/5"
           : err
             ? "border-destructive/40 bg-destructive/5"
-            : "border-border bg-surface"
+            : busy
+              ? "border-primary/40 bg-primary/5"
+              : "border-border bg-surface"
       }`}
     >
       <div className="flex items-center justify-between gap-2">
@@ -367,7 +383,7 @@ function SlotCard({
           {icon}
           <span className="font-medium">{title}</span>
         </div>
-        {slot.file && (
+        {slot.file && !busy && (
           <button
             onClick={onClear}
             className="text-muted-foreground hover:text-foreground"
@@ -377,12 +393,38 @@ function SlotCard({
           </button>
         )}
       </div>
-      <div className="mt-1 text-[11px] text-muted-foreground">
+      <div className="mt-1 text-[11px] text-muted-foreground truncate">
         {slot.file ? slot.file.name : "Waiting for file…"}
       </div>
+
+      {busy && (
+        <div className="mt-2">
+          <div className="flex items-center justify-between text-[11px] text-primary">
+            <span className="inline-flex items-center gap-1">
+              <Loader2 className="size-3 animate-spin" /> Parsing…
+            </span>
+            <span className="num">{slot.progress}%</span>
+          </div>
+          <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-surface-2">
+            <div
+              className="h-full bg-primary transition-all"
+              style={{ width: `${slot.progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {ok && (
-        <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-success">
-          <CheckCircle2 className="size-3.5" /> Parsed successfully
+        <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-success">
+          <span className="inline-flex items-center gap-1">
+            <CheckCircle2 className="size-3.5" /> Parsed successfully
+          </span>
+          {count != null && (
+            <span className="text-muted-foreground">
+              · <span className="num text-foreground/85">{count.toLocaleString()}</span>{" "}
+              {title.endsWith(".json") ? "employees" : "records"}
+            </span>
+          )}
         </div>
       )}
       {err && (
@@ -393,3 +435,4 @@ function SlotCard({
     </div>
   );
 }
+
