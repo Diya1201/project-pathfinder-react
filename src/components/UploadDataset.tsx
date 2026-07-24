@@ -1,5 +1,13 @@
 import { useCallback, useRef, useState } from "react";
-import { Upload, FileJson, FileSpreadsheet, CheckCircle2, AlertCircle, X } from "lucide-react";
+import {
+  Upload,
+  FileJson,
+  FileSpreadsheet,
+  CheckCircle2,
+  AlertCircle,
+  X,
+  Loader2,
+} from "lucide-react";
 import Papa from "papaparse";
 
 export interface UploadedDataset {
@@ -20,7 +28,17 @@ interface SlotState {
   file: File | null;
   parsed: unknown;
   error: string | null;
+  progress: number; // 0..100
+  processing: boolean;
 }
+
+const EMPTY_SLOT: SlotState = {
+  file: null,
+  parsed: null,
+  error: null,
+  progress: 0,
+  processing: false,
+};
 
 const EXPECTED = {
   employees: { name: "employees.json", ext: "json" },
@@ -36,11 +54,12 @@ function detectKind(file: File): FileKind | null {
 
 export function UploadDataset({ onLoaded }: Props) {
   const [slots, setSlots] = useState<Record<FileKind, SlotState>>({
-    employees: { file: null, parsed: null, error: null },
-    activity: { file: null, parsed: null, error: null },
+    employees: { ...EMPTY_SLOT },
+    activity: { ...EMPTY_SLOT },
   });
   const [dragOver, setDragOver] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
   const processFile = useCallback(async (file: File) => {
